@@ -27,6 +27,7 @@
       'include_dirs': [
         'include',
         'src/',
+        '<(additional_include)'
       ],
       'direct_dependent_settings': {
         'include_dirs': [ 'include' ],

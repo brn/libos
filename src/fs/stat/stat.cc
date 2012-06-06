@@ -3,7 +3,7 @@
 
 #ifdef PLATFORM_POSIX
 #define STAT_FN(filename, statObj) ::stat (filename, statObj)
-#elif PLATFORM_WIN32
+#elif defined(PLATFORM_WIN32)
 #define STAT_FN(filename, statObj) ::_stat (filename, statObj)
 #endif
 

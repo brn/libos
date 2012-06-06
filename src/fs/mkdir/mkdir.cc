@@ -1,19 +1,17 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <defines.h>
 #ifdef PLATFORM_WIN32
 #include <direct.h>
-#endif
-#include <string.h>
-#ifdef PLATFORM_POSIX
+#define MKDIR(path) ::_mkdir(path)
+#elif defined PLATFORM_POSIX
 #include <sys/stat.h>
+#define MKDIR(path) ::mkdir(path,0777)
 #endif
 #include <fs.h>
 #include <thread.h>
 #include <utilities.h>
-
-#ifdef PLATFORM_WIN32
-#define MKDIR(path) _mkdir(path)
-#elif defined PLATFORM_POSIX
-#define MKDIR(path) ::mkdir(path,0777)
-#endif
 namespace os {namespace fs {
 class MutexHolder : private Static {
  public :

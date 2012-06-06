@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <utils/int_types.h>
+#include <utilities.h>
 #include <thread.h>
 namespace os {
 
@@ -62,7 +62,7 @@ void Thread::Cancel() {
   TerminateThread(thread_t_, *ret);
 }
 
-ThreadId Thread::ThreadId() {return GetCurrentThreadId();}
+ThreadId Thread::GetThreadId() {return GetCurrentThreadId();}
 
 bool Thread::IsJoinable() {
   return !flags_.At(kDetach) && !flags_.At(kExit) && !flags_.At(kCanceled);

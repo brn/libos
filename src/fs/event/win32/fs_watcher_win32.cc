@@ -4,7 +4,6 @@
 #include <locale>
 #include <logging.h>
 #include <fs.h>
-#include <fs/event/event.h>
 #include <fs_watcher_win32.h>
 namespace os { namespace fs {
 typedef SharedPtr<FSEvent> FSEventHandle;
@@ -65,26 +64,26 @@ HANDLE OpenHandle(const char* path) {
   return handle;
 }
 
-void* FSWatcherPlt::ThreadRunner(void* param) {
-  FSWatcherPlt* watcher = reinterpret_cast<FSWatcherPlt*>(param);
+void* FSWatcher::ThreadRunner(void* param) {
+  FSWatcher* watcher = reinterpret_cast<FSWatcher*>(param);
   watcher->Start();
   return NULL;
 }
 
-FSWatcherPlt::FSWatcherPlt()
+FSWatcher::FSWatcher()
     : is_exit_(true),
       run_type_(0) {
   iocp_handle_ = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
 }
 
-FSWatcherPlt::~FSWatcherPlt() {
+FSWatcher::~FSWatcher() {
   RemoveWatch();
   if (iocp_handle_ != INVALID_HANDLE_VALUE) {
     CloseHandle(iocp_handle_);
   }
 }
 
-void FSWatcherPlt::AddWatch(const char* path){
+void FSWatcher::AddWatch(const char* path){
   Path path_info(path);
   const char* dir = path_info.directory();
   Stat stat(dir);
@@ -118,7 +117,7 @@ void FSWatcherPlt::AddWatch(const char* path){
   }
 }
 
-void FSWatcherPlt::RemoveWatch(const char* path) {
+void FSWatcher::RemoveWatch(const char* path) {
   Path path_info(path);
   const char* dir = path_info.directory();
   DirectoryMap::iterator it = dir_map_.find(dir);
@@ -143,19 +142,19 @@ void FSWatcherPlt::RemoveWatch(const char* path) {
   }
 }
 
-void FSWatcherPlt::RemoveWatch() {
+void FSWatcher::RemoveWatch() {
   Exit();
   dir_map_.clear();
 }
 
-void FSWatcherPlt::CreateIOCP() {
+void FSWatcher::CreateIOCP() {
   DirectoryMap::iterator it = dir_map_.begin();
   for (; it != dir_map_.end(); ++it) {
     ReadDirectoryChangesW(it->second.Get());
   }
 }
 
-void FSWatcherPlt::Run() {
+void FSWatcher::Run() {
   CreateIOCP();
   run_type_ = kSync;
   Thread t;
@@ -163,7 +162,7 @@ void FSWatcherPlt::Run() {
   t.Join();
 }
 
-void FSWatcherPlt::RunAsync() {
+void FSWatcher::RunAsync() {
   CreateIOCP();
   run_type_ = kAsync;
   Thread t;
@@ -171,7 +170,7 @@ void FSWatcherPlt::RunAsync() {
   t.Detach();
 }
 
-void FSWatcherPlt::Exit() {
+void FSWatcher::Exit() {
   is_exit_ = true;
   run_type_ = 0;
   LPOVERLAPPED ol = new OVERLAPPED;
@@ -179,14 +178,14 @@ void FSWatcherPlt::Exit() {
   ScopedLock lock(mutex_);
 }
 
-bool FSWatcherPlt::IsRunning() const {return !is_exit_;}
+bool FSWatcher::IsRunning() const {return !is_exit_;}
 
-bool FSWatcherPlt::IsWatched(const char* path) const {
+bool FSWatcher::IsWatched(const char* path) const {
   FileMap::const_iterator find_file = file_map_.find(path);
   return find_file != file_map_.end();
 }
 
-void FSWatcherPlt::ReadDirectoryChangesW(HandleData* handle_data) {
+void FSWatcher::ReadDirectoryChangesW(HandleData* handle_data) {
   if (!::ReadDirectoryChangesW(handle_data->fs_event_handle(), handle_data->buffer(), BUF_SIZE,
                                TRUE, filter, NULL,
                                handle_data->overlapped(), NULL)) {
@@ -196,7 +195,7 @@ void FSWatcherPlt::ReadDirectoryChangesW(HandleData* handle_data) {
   }
 }
 
-void FSWatcherPlt::Start() {
+void FSWatcher::Start() {
   ScopedLock lock(mutex_);
   is_exit_ = false;
   LPOVERLAPPED pol = NULL;
@@ -230,7 +229,7 @@ void FSWatcherPlt::Start() {
   }
 }
 
-void FSWatcherPlt::WithoutFni(HandleData* handle_data) {
+void FSWatcher::WithoutFni(HandleData* handle_data) {
   Files::iterator it = handle_data->files()->begin();
   for (; it != handle_data->files()->end(); ++it) {
     FSEvent* e = it->second.Get();
@@ -243,7 +242,7 @@ void FSWatcherPlt::WithoutFni(HandleData* handle_data) {
   }
 }
 
-void FSWatcherPlt::WithFni(HandleData* handle_data) {
+void FSWatcher::WithFni(HandleData* handle_data) {
   FILE_NOTIFY_INFORMATION *fni = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(handle_data->buffer());
   FILE_NOTIFY_INFORMATION *head = fni;
   while (1) {
@@ -274,7 +273,7 @@ void FSWatcherPlt::WithFni(HandleData* handle_data) {
   }
 }
 
-void FSWatcherPlt::EmitEvent(FSEvent* e, HandleData* handle_data) {
+void FSWatcher::EmitEvent(FSEvent* e, HandleData* handle_data) {
   if (e->IsExist()) {
     if (e->IsModified()) {
       NotifyForKey(kModify, e);
@@ -287,7 +286,7 @@ void FSWatcherPlt::EmitEvent(FSEvent* e, HandleData* handle_data) {
   }
 }
 
-const char FSWatcherPlt::kModify[] = {"Modified<ReadDirectoryChangesW>"};
-const char FSWatcherPlt::kUpdate[] = {"Update<ReadDirectoryChangesW>"};
-const char FSWatcherPlt::kDelete[] = {"Delete<ReadDirectoryChangesW>"};
+const char FSWatcher::kModify[] = {"Modified<ReadDirectoryChangesW>"};
+const char FSWatcher::kUpdate[] = {"Update<ReadDirectoryChangesW>"};
+const char FSWatcher::kDelete[] = {"Delete<ReadDirectoryChangesW>"};
 }}

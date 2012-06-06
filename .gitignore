@@ -1,3 +1,7 @@
 *.xcodeproj
 build
 out
+*.vcxproj
+*.sln
+*.filters
+Debug

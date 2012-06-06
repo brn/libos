@@ -5,16 +5,16 @@ namespace os { namespace fs {
 struct FSEventContainer;
 class HandleData;
 class FSEvent;
-class FSWatcherPltAsync;
+class FSWatcherAsync;
 class HandleData;
 typedef SharedPtr<HandleData> HandleDataHandle;
-class FSWatcherPlt : public Notificator<FSEvent*> {
-  friend class FSWatcherPltAsync;
+class FSWatcher : public Notificator<FSEvent*> {
+  friend class FSWatcherAsync;
   typedef roastlib::unordered_map<std::string, HandleDataHandle> DirectoryMap;
   typedef roastlib::unordered_map<std::string, bool> FileMap;
  public :
-  FSWatcherPlt();
-  ~FSWatcherPlt();
+  FSWatcher();
+  ~FSWatcher();
   void AddWatch(const char* path);
   void RemoveWatch(const char* path);
   void RemoveWatch();

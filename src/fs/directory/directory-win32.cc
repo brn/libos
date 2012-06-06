@@ -23,9 +23,8 @@
 #include <vector>
 #include <windows.h>
 #include <io.h>
-#include <utils/assert.h>
-#include <fs/stat/stat.h>
-#include <fs/directory/directory-inl.h>
+#include <utilities.h>
+#include <fs.h>
 namespace os {namespace fs {
 Directory::Directory(const char* path) : dirpath_(path){};
 Directory::~Directory(){}
@@ -41,8 +40,8 @@ DirEntry* Get(WIN32_FIND_DATA* ffdata, SubDirList *sub, const char* current, mem
   }
   std::string abspath;
   os::SPrintf(&abspath, "%s/%s", current, ffdata->cFileName);
-  os::Path file_path_info(abspath.c_str());
-  os::Path dir_path_info(current);
+  os::fs::Path file_path_info(abspath.c_str());
+  os::fs::Path dir_path_info(current);
   return new(pool) DirEntry(ffdata->cFileName, dir_path_info.absolute_path(), file_path_info.absolute_path(), is_dir);
 }
 
