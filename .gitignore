@@ -5,3 +5,6 @@ out
 *.sln
 *.filters
 Debug
+*.sdf
+*.suo
+*.user
