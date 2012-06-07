@@ -32,19 +32,18 @@ Directory::~Directory(){}
 class DirFinder {
   typedef std::vector<std::string> SubDirList;
  public :
-  DirFinder(const char* path, bool recursive, DIR* dir, memory::Pool* pool) :
+  DirFinder(const char* path, bool recursive, memory::Pool* pool) :
       path_(path),
       recursive_(recursive),
-      dir_(dir),
       first_(0),
       current_(0),
       pool_(pool){};
   
   inline DirEntry* GetFirst() { return first_; }
-  inline DirEntry* Find() {
+  inline DirEntry* Find(DIR* dir) {
     SubDirList sub;
     while (1) {
-      int ret = readdir_r(dir_, &entry_, &result_);
+      int ret = readdir_r(dir, &entry_, &result_);
       if (ret != 0) {
         break;
       }
@@ -74,7 +73,7 @@ class DirFinder {
       }
       current_ = entry;
     }
-    closedir(dir_);
+    closedir(dir);
     FindSubDir(sub);
     return current_;
   }
@@ -88,8 +87,8 @@ class DirFinder {
       if (dir == NULL) {
         continue;
       } else {
-        DirFinder finder(path, recursive_, dir, pool_);
-        DirEntry* last = finder.Find();
+        DirFinder finder(path, recursive_, pool_);
+        DirEntry* last = finder.Find(dir);
         if (first_) {
           current_->SetNext(finder.GetFirst());
           current_ = (last)? last : current_;
@@ -103,7 +102,6 @@ class DirFinder {
   }
   const char* path_;
   bool recursive_;
-  DIR* dir_;
   dirent entry_;
   dirent *result_;
   DirEntry* first_;
@@ -116,8 +114,8 @@ Directory::const_iterator Directory::Entries(bool recursive) {
   if (dir == NULL) {
     return const_iterator(0);
   }
-  DirFinder finder(dirpath_.c_str(), recursive, dir, &pool_);
-  finder.Find();
+  DirFinder finder(dirpath_.c_str(), recursive, &pool_);
+  finder.Find(dir);
   return const_iterator(finder.GetFirst());
 }
 

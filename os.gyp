@@ -26,8 +26,7 @@
       'type': '<(library)',
       'include_dirs': [
         'include',
-        'src/',
-        '<(additional_include)'
+        'src/'        
       ],
       'direct_dependent_settings': {
         'include_dirs': [ 'include' ],
@@ -74,8 +73,7 @@
         'src/fs/event/event.cc',
         'src/fs/event/md5.h',
         'src/fs/event/md5.cc',
-        'src/utils/memory/pool.cc',
-        'src/utils/memory/pool-inl.h',
+        'src/utils/pool.cc',
         'src/utils/utils.h',
         'src/utils/log/logging.cc'
       ],
@@ -86,6 +84,9 @@
             'src/thread/thread-win32.cc',
             'src/fs/directory/directory-win32.cc',
             'src/fs/event/win32/fs_watcher_win32.cc'
+          ],
+          'include_dirs' : [
+            '<(additional_include)'
           ]
         }, { # Not Windows i.e. POSIX
           'cflags': [

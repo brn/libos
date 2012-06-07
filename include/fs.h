@@ -95,9 +95,10 @@ class Stat{
 
 bool mv(const char* old_path, const char* new_path);
 bool rm(const char* path);
-
+class DirFinder;
 class DirEntry : public memory::Allocated {
   friend class Directory;
+  friend class DirFinder;
  public :
   DirEntry(const char* path, const char* dir, const char* fullpath, bool is_dir)
       : is_dir_(is_dir),
@@ -110,10 +111,10 @@ class DirEntry : public memory::Allocated {
   const char* abspath() const { return full_path_.c_str(); };
   const char* dirname() const { return dir_.c_str(); };
   bool IsDir() const {return is_dir_;}
-  bool IsFile() const {return !is_dir_;}
-  void SetNext(DirEntry* ent) { next_ = ent; };
+  bool IsFile() const {return !is_dir_;}  
  private :
   DirEntry() : next_(0){}
+  void SetNext(DirEntry* ent) { next_ = ent; };
   bool is_dir_;
   std::string name_;
   std::string dir_;

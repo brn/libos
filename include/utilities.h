@@ -2,6 +2,7 @@
 #define INCLUDE_UTILITIES_H_
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <string>
 #include <errno.h>
 #include "lib/unordered_map.h"
@@ -221,6 +222,7 @@ class Pool : private Uncopyable {
    * Allocatable size is kDefaultSize.
    */
   void* AllocLinkedList(size_t size);
+  size_t size;
   Allocated* current_;
   Allocated* head_;
   Chunk<kDefaultSize>* head_chunk_;

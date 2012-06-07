@@ -39,6 +39,8 @@ if __name__ == '__main__':
   additional_include = os.getenv("INCLUDE")
   if  additional_include :
     args.append('-Dadditional_include=' + additional_include)
+  else :
+    additional_include = ""
 
   # There's a bug with windows which doesn't allow this feature.
   if sys.platform != 'win32':
@@ -48,6 +50,7 @@ if __name__ == '__main__':
     args.extend(['-Goutput_dir=' + output_dir])
     # Create Makefiles, not XCode projects
     args.extend('-f make'.split())
+  else :
     os.system("vcvarsall.bat")
 
   args.append('-Dtarget_arch=ia32')

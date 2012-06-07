@@ -114,6 +114,7 @@ inline Pool::Pool()
   head_chunk_ = new Chunk<kDefaultSize>;
   current_chunk_ = head_chunk_;
 }
+
 inline Pool::~Pool() {Free();}
 
 template <typename T>
@@ -189,5 +190,7 @@ inline void* Pool::AllocLinkedList(size_t size) {
 }
 
 }}
+
+
 
 #endif
