@@ -34,7 +34,7 @@ bool mkdir(const char* path, int permiss) {
     for (int i = 0,count = 0; i < len; ++i) {
       if (processed_path[ i ] == '/') {
         if (i == 0) {
-          Directory::chdir("/");
+          chdir("/");
         } else {
           if (tmp[ count - 1 ] == ':') {
             tmp[ count ] = '/';
@@ -44,13 +44,13 @@ bool mkdir(const char* path, int permiss) {
           Stat st(tmp);
           if (!st.IsExist() || !st.IsDir()) {
             if (-1 == MKDIR(tmp)) {
-              Directory::chdir(current);
+              ChangeDirectory(current);
               return false;
             }
-            Directory::chmod(tmp, permiss);
-            Directory::chdir(tmp);
+            Chmod(tmp, permiss);
+            ChangeDirectory(tmp);
           } else if (st.IsDir()) {
-            Directory::chdir(tmp);
+            ChangeDirectory(tmp);
           }
           tmp[ 0 ] = '\0';
           count = 0;
@@ -60,7 +60,7 @@ bool mkdir(const char* path, int permiss) {
         count++;
       }
     }
-    Directory::chdir(current);
+    ChangeDirectory(current);
     return true;
   }
   return false;

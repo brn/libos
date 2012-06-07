@@ -2,16 +2,12 @@
 #include "../include/utilities.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <err.h>
-#include <sys/types.h>
-#include <dirent.h>
 
 int main (int argc, char** args) {
-  printf("%d\n", argc);
+  printf("%s\n", os::fs::Path::current_directory());
   const char* target = (argc > 1)? args[1] : "../";
-  os::fs::Directory dir(target);
-  os::fs::Directory::const_iterator it = dir.Entries(true);
-  for (; it != dir.end(); ++it) {
+  os::fs::directory_iterator it(target, true);
+  for (; it != os::fs::directory_iterator::end(); ++it) {
     os::Printf("%s\n", it->abspath());
   }
   /*

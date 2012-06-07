@@ -64,7 +64,6 @@
         'include/smart_pointer/scoped_ptr.h',
         'include/smart_pointer/shared_ptr.h',
         'src/lib/unordered_map.h',
-        'src/fs/directory/directory-inl.h',
         'src/fs/path/path.cc',
         'src/fs/mv/mv.cc',
         'src/fs/rm/rm.cc',
@@ -83,7 +82,9 @@
             'src/utils/utils-win32.cc',
             'src/thread/thread-win32.cc',
             'src/fs/directory/directory-win32.cc',
-            'src/fs/event/win32/fs_watcher_win32.cc'
+            'src/fs/event/win32/fs_watcher_win32.cc',
+            'src/fs/directory/directory_defines-win32.h',
+            'src/fs/directory/directory_defines-win32.cc'
           ],
           'include_dirs' : [
             '<(additional_include)'
@@ -119,6 +120,26 @@
           ]
         }]
       ]
+    },
+    {
+      'target_name': 'run-test',
+      'type': 'executable',
+      'dependencies': [ 'os' ],
+      'sources': [
+        'test/test.cc'
+      ],
+      'conditions' : [
+        ['OS=="win"', {
+          'include_dirs' : [
+            '<(additional_include)'
+          ]
+        }]
+      ],
+      'msvs-settings': {
+        'VCLinkerTool': {
+          'SubSystem': 1, # /subsystem:console
+        }
+      }
     }
   ]
 }

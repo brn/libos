@@ -24,26 +24,26 @@
 namespace os { namespace fs {
 
 bool RemoveDirOnly(const char* path) {
-  Directory dirs(path);
-  Directory::const_iterator only_dir_it = dirs.Entries(false);
-  while (only_dir_it != dirs.end()) {
-    RemoveDirOnly(only_dir_it->abspath());
-    ++only_dir_it;
+  directory_iterator dirs(path, true);
+  directory_iterator end;
+  while (dirs != end) {
+    RemoveDirOnly(dirs->abspath());
+    ++dirs;
   }
   return ::remove(path);
 }
 
 bool RemoveDir(const char* path) {
-  Directory dir(path);
-  Directory::const_iterator it = dir.Entries(true);
-  while (it != dir.end()) {
-    if (it->IsFile()) {
-      bool ret = (::remove(it->abspath()) != -1);
+  directory_iterator dirs(path, true);
+  directory_iterator end;
+  while (dirs != end) {
+    if (dirs->IsFile()) {
+      bool ret = (::remove(dirs->abspath()) != -1);
       if (!ret) {
         return ret;
       }
     }
-    ++it;
+    ++dirs;
   }  
   return RemoveDirOnly(path);
 }

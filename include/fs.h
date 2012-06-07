@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <string>
+#include <vector>
 #include "defines.h"
 #include "thread.h"
 #include "utilities.h"
@@ -96,6 +97,7 @@ class Stat{
 bool mv(const char* old_path, const char* new_path);
 bool rm(const char* path);
 class DirFinder;
+struct DirData;
 class DirEntry : public memory::Allocated {
   friend class Directory;
   friend class DirFinder;
@@ -122,32 +124,30 @@ class DirEntry : public memory::Allocated {
   const DirEntry* next_;
 };
 
-class Directory {
+class directory_iterator : public std::iterator<std::forward_iterator_tag, const DirEntry*> {
  public :
-  class const_iterator : public std::iterator<std::forward_iterator_tag, const DirEntry*> {
-   public :
-    explicit const_iterator(const DirEntry*);
-    const_iterator();
-    const_iterator(const const_iterator&);
-    ~const_iterator();
-    const const_iterator& operator = (const const_iterator&);
-    const DirEntry& operator*() const;
-    const DirEntry* operator->() const;
-    const_iterator& operator ++();
-    bool operator !=(const const_iterator&) const;
-   private :
-    const DirEntry* entry_;
-  };
-  Directory(const char* path);
-  ~Directory();
-  const_iterator Entries(bool recursive);
-  const_iterator end() const { return const_iterator(0);};
-  static void chdir(const char* path);
-  static void chmod(const char* path, int permiss);
+  explicit directory_iterator(const char* path, bool recursive = false);
+  directory_iterator();
+  directory_iterator(const directory_iterator&);
+  ~directory_iterator();
+  const directory_iterator& operator = (const directory_iterator&);
+  const DirEntry& operator*() const;
+  const DirEntry* operator->() const;
+  directory_iterator& operator ++();
+  bool operator !=(const directory_iterator&) const;
+  static const directory_iterator& end();
  private :
-  std::string dirpath_;
+  void Initialize(const char* path);
+  void CreateDirEnt();
+  bool recursive_;
+  std::vector<DirEntry*> sub_;
+  DirData* dir_data_;
+  DirEntry* current_entry_;
   memory::Pool pool_;
 };
+
+void ChangeDirectory(const char* path);
+void Chmod(const char* path, int permiss);
 
 bool mkdir(const char* path, int permiss);
 

@@ -2,6 +2,7 @@
 #define FS_DIRECTORY_DIRECTORY_INL_H_
 #include <fs.h>
 namespace os {namespace fs {
+/*
 Directory::const_iterator::const_iterator(const DirEntry* entry) : entry_(entry){}
 Directory::const_iterator::const_iterator() : entry_(0){}
 Directory::const_iterator::~const_iterator() {}
@@ -28,8 +29,10 @@ Directory::const_iterator& Directory::const_iterator::operator++() {
   return (*this);
 }
 
-bool Directory::const_iterator::operator != (const Directory::const_iterator& iter) const {
+bool Directory::directory_iterator::operator != (const Directory::const_iterator& iter) const {
   return entry_ != iter.entry_;
 }
+*/
+
 }}
 #endif

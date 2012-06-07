@@ -24,8 +24,9 @@
 #include <windows.h>
 #include <io.h>
 #include <utilities.h>
+#include <fs/directory/directory_defines-win32.h>
 #include <fs.h>
-namespace os {namespace fs {
+namespace os {namespace fs {/*
 Directory::Directory(const char* path) : dirpath_(path){};
 Directory::~Directory(){}
 typedef std::vector<std::string> SubDirList;
@@ -88,9 +89,9 @@ DirEntry* Find(DirEntry* entry,
     std::string next_dir;
     os::SPrintf(&next_dir, "%s/%s", current, begin->c_str());
     DirEntry* tmp = Find(entry, next_dir.c_str(), recursive, pool);
-	if (tmp != 0 && tmp != entry) {
-       entry = tmp;
-	}
+    if (tmp != 0 && tmp != entry) {
+      entry = tmp;
+    }
     ++begin;
   }
   return (initial)? first : entry;
@@ -109,5 +110,113 @@ void Directory::chdir(const char* path) {
 void Directory::chmod(const char* path, int permiss) {
   _chmod(path,permiss);
 }
+                            */
 
+void ChangeDirectory(const char* path) {
+  SetCurrentDirectory(path);
+}
+
+void Chmod(const char* path, int permiss) {
+  _chmod(path,permiss);
+}
+
+directory_iterator::directory_iterator(const char* path, bool recursive)
+    : recursive_(recursive),
+      dir_data_(NULL),
+      current_entry_(NULL){Initialize(path);}
+
+directory_iterator::directory_iterator()
+    : recursive_(false),
+      dir_data_(NULL),
+      current_entry_(NULL){}
+
+directory_iterator::~directory_iterator() {
+  if (dir_data_ != NULL) {
+    delete dir_data_;
+  }
+}
+
+directory_iterator::directory_iterator(const directory_iterator& iterator) {
+  recursive_ = iterator.recursive_;
+  dir_data_ = iterator.dir_data_;
+  current_entry_ = iterator.current_entry_;
+}
+
+void directory_iterator::Initialize(const char* path) {
+  if (dir_data_ == NULL) {
+    dir_data_ = new DirData;
+  } else {
+    delete dir_data_;
+    dir_data_ = new DirData;
+  }
+  if (!Dir::Open(path, dir_data_)) {
+    current_entry_ = NULL;
+  } else {
+    CreateDirEnt();
+    if (current_entry_ != NULL && current_entry_->IsDir() && recursive_) {
+      sub_.push_back(current_entry_);
+    }
+  }
+  if (current_entry_ == NULL && recursive_ && sub_.size() > 0) {
+    DirEntry* entry = sub_.back();
+    sub_.pop_back();
+    const char* abspath = entry->abspath();
+    Initialize(abspath);
+  } else if (current_entry_ == NULL) {
+    delete dir_data_;
+    dir_data_ = NULL;
+  }
+}
+
+const directory_iterator& directory_iterator::operator = (const directory_iterator& iterator) {
+  recursive_ = iterator.recursive_;
+  sub_ = iterator.sub_;
+  dir_data_ = iterator.dir_data_;
+  current_entry_ = iterator.current_entry_;
+  return (*this);
+}
+
+const DirEntry& directory_iterator::operator*() const {
+  return (*current_entry_);
+}
+
+const DirEntry* directory_iterator::operator->() const {
+  return current_entry_;
+}
+
+directory_iterator& directory_iterator::operator++() {
+  if (dir_data_) {
+    if (!Dir::NextEntry(dir_data_)) {
+      current_entry_ = NULL;
+    } else {
+      CreateDirEnt();
+      if (current_entry_ != NULL && current_entry_->IsDir() && recursive_) {
+        sub_.push_back(current_entry_);
+      }
+    }
+    if (current_entry_ == NULL && recursive_ && sub_.size() > 0) {
+      DirEntry* entry = sub_.back();
+      sub_.pop_back();
+      const char* abspath = entry->abspath();
+      Initialize(abspath);
+    } else if (current_entry_ == NULL) {
+      delete dir_data_;
+      dir_data_ = NULL;
+    }
+  }
+  return (*this);
+}
+
+bool directory_iterator::operator != (const directory_iterator& iter) const {
+  return current_entry_ != iter.current_entry_;
+}
+
+void directory_iterator::CreateDirEnt() {
+  if (dir_data_ != NULL) {
+    current_entry_ = (current_entry_ != NULL)?
+        Dir::CreateNextEntry(dir_data_, &pool_) : Dir::CreateFirstEntry(dir_data_, &pool_);
+  }
+}
+static directory_iterator it;
+const directory_iterator& directory_iterator::end() {return it;}
 }}
