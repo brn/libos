@@ -59,63 +59,86 @@
 
 namespace os {namespace fs {
 static os::Mutex mutex_;
-void GetDirectoryFromPath(const char* path, std::string* buffer) {
+char* GetDirectoryFromPath(const char* path, char* buffer) {
   int index = strlen(path);
   bool is_slashed = false;
-  buffer->assign(path);
   while (index--) {
     if (is_slashed) {
       break;
     }
-    if (path[ index ] == '/') {
+    if (path[index] == '/') {
       is_slashed = true;
     }
   }
-  buffer->erase(index + 1, buffer->size());
+  buffer = (is_slashed)? os::Strdup(&path[index + 1]) : os::Strdup(path);
+  return buffer;
 }
 
-void GetFileNameFromPath(const char* path, std::string* buffer) {
+char* GetFileNameFromPath(const char* path, char* buffer) {
   int len = strlen(path);
   if (path[len - 1] == '/') {
-    return;
+    return NULL;
   }
   const char* ptr = strrchr(path, '/');
   if (ptr) {
-    buffer->assign((ptr + 1));
+    buffer = os::Strdup(ptr + 1);
   } else {
-    buffer->assign(path);
+    buffer = os::Strdup(path);
   }
+  return buffer;
 }
 
-void ConvertBackSlash(const char* path, std::string* buffer) {
-  buffer->assign(path);
-  size_t index = 0;
-  while ((index = buffer->find("\\", 0)) != std::string::npos) {
-    buffer->assign(buffer->replace(index, 1, "/"));
+char* ConvertBackSlash(const char* path, char* buffer) {
+  buffer = os::Strdup(path);
+  for (int i = 0; buffer[i]; i++) {
+    if (buffer[i] == '\\') {
+      buffer[i] = '/';
+    }
   }
+  return buffer;
 }
 
-void GetAbsolutePath(const char* path, std::string* buffer, bool* is_success = 0) {
+char* GetExtension(const char* path, char* buffer) {
+  bool has = false;
+  int begin = strlen(path) - 1;
+  for (int i = begin; path[i]; i--) {
+    if (path[i] == '.' && i < begin) {
+      has = true;
+      buffer = os::Strdup(&path[i + 1]);
+      break;
+    }
+  }
+  if (!has) {
+    return NULL;
+  }
+  return buffer;
+}
+
+char* GetAbsolutePath(const char* path, char* buffer, bool* is_success = 0) {
   if (strcmp(path, "/") == 0) {
-    buffer->assign(path);
-    return;
+    buffer = os::Strdup(path);
+    return NULL;
   }
   char *tmp;
   FULL_PATH(path, tmp);
   if (tmp != NULL) {
-    ConvertBackSlash(tmp, buffer);
+    buffer = ConvertBackSlash(tmp, buffer);
     free(tmp);
   } else {
     if (is_success) {
       (*is_success) = false;
     }
-    buffer->assign(path);
+    buffer = os::Strdup(path);
   }
+  return buffer;
 }
 
 void Path::NormalizePath(const char* path, std::string* buffer) {
   int size = strlen(path);
-  ConvertBackSlash(path, buffer);
+  char* buf;
+  buf = ConvertBackSlash(path, buf);
+  buffer->assign(buf);
+  free(buf);
   while (1) {
     size_t pos = buffer->find("../", 0);
     if (pos == std::string::npos) {
@@ -160,31 +183,53 @@ void Path::NormalizePath(const char* path, std::string* buffer) {
   }
 }
 
-Path::Path(const char* path) {
+Path::Path(const char* path)
+    : raw_(NULL),
+      fullpath_(NULL),
+      filename_(NULL),
+      directory_(NULL),
+      ext_(NULL){
   raw_ = os::Strdup(path);
   bool success = true;
-  GetAbsolutePath(path, &fullpath_, &success);
-  if (fullpath_.size() > 0 && fullpath_.size() > 1 && fullpath_.at(fullpath_.size() - 1) == '/') {
-    fullpath_.erase(fullpath_.size() - 1, 1);
-  }
-  if (success) {
-    Stat stat(fullpath_.c_str());
-    if (!stat.IsDir()) {
-      GetDirectoryFromPath(absolute_path(), &directory_);
-      GetFileNameFromPath(absolute_path(), &filename_);
-    } else {
-      directory_ = fullpath_;
-      filename_ = "";
+  fullpath_ = GetAbsolutePath(path, fullpath_, &success);
+  if (fullpath_ != NULL) {
+    int len = strlen(fullpath_);
+    if (len > 1 && fullpath_[len - 1] == '/') {
+      fullpath_[len - 1] = 0;
     }
-  } else {
-    directory_ = path;
-    filename_ = path;
+    if (success) {
+      Stat stat(fullpath_);
+      if (!stat.IsDir()) {
+        directory_ = GetDirectoryFromPath(absolute_path(), directory_);
+        filename_ = GetFileNameFromPath(absolute_path(), filename_);
+        ext_ = GetExtension(absolute_path(), ext_);
+      } else {
+        directory_ = os::Strdup(fullpath_);
+        filename_ = os::Strdup("");
+        ext_ = NULL;
+      }
+    } else {
+      directory_ = os::Strdup(path);
+      filename_ = os::Strdup(path);
+    }
   }
 }
-  
+
+Path::~Path() {
+  if (raw_ != NULL) {free(raw_);}
+  if (fullpath_ != NULL) {free(fullpath_);}
+  if (filename_ != NULL) {free(filename_);}
+  if (directory_ != NULL) {free(directory_);}
+}
+
 const char* Path::current_directory() {
   os::ScopedLock lock(mutex_);
-  current_dir_.clear();
+  if (current_dir_ != NULL) {
+    free(current_dir_);
+  } else {
+    atexit(Path::ReleaseCurrentDirectory);
+  }
+  current_dir_ = NULL;
 #define GW_BUF_SIZE 1000
 #ifdef PLATFORM_WIN32
     char tmp[GW_BUF_SIZE];
@@ -192,45 +237,62 @@ const char* Path::current_directory() {
     if (!isSuccess) {
       fprintf(stderr, "GetCwd fail.");
     }
-    ConvertBackSlash(tmp, &current_dir_);
+    ConvertBackSlash(tmp, current_dir_);
 #elif defined PLATFORM_POSIX
     char tmp[GW_BUF_SIZE];
     char* dir = getcwd(tmp, sizeof (tmp));
     if (!dir) {
       fprintf(stderr, "GetCwd fail.");
     };
-    current_dir_ = dir;
+    current_dir_ = os::Strdup(dir);
 #endif
-    return current_dir_.c_str();
+    return current_dir_;
 }
 
 
 const char* Path::home_directory() {
   os::ScopedLock lock(mutex_);
+  if (user_home_ != NULL) {
+    free(user_home_);
+  } else {
+    atexit(Path::ReleaseHomeDirectory);
+  }
+  user_home_ = NULL;
 #ifdef PLATFORM_WIN32
   const char* drive = getenv("HOMEDRIVE");
   const char* home = getenv(HOME);
   if (home && drive) {
-    user_home_ = drive;
-    user_home_ += '/';
-    user_home_ += home;
-    GetAbsolutePath(user_home_.c_str(), &user_home_);
-    return user_home_.c_str();
+    std::string buf;
+    os::SPrintf(&buf, "%s/%s", drive, home);
+    user_home_ = os::Strdup(buf.c_str());
+    GetAbsolutePath(user_home_, user_home_);
+    return user_home_;
   }
   return 0;
 #elif defined PLATFORM_POSIX
   const char* home = getenv(HOME);
   if (home) {
-    user_home_ = home;
-    user_home_.c_str();
-    return user_home_.c_str();
+    user_home_ = os::Strdup(home);
+    return user_home_;
   }
   return 0;
 #endif
 }
 
-std::string Path::current_dir_;
-std::string Path::user_home_;
+void Path::ReleaseCurrentDirectory() {
+  if (current_dir_ != NULL) {
+    free(current_dir_);
+  }
+}
+void Path::ReleaseHomeDirectory() {
+  if (user_home_ != NULL) {
+    free(user_home_);
+  }
+}
+
+char* Path::current_dir_ = NULL;
+char* Path::user_home_ = NULL;
+
 typedef std::vector<std::string> PathArray;
 
 void GetPathArray(const char* path, PathArray *array) {

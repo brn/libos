@@ -19,44 +19,33 @@
  *CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *DEALINGS IN THE SOFTWARE.
  */
-#include <stdio.h>
+#ifndef FS_DIRECTORY_DIRECTORY_DEFINES_POSIX_H_
+#define FS_DIRECTORY_DIRECTORY_DEFINES_POSIX_H_
+#include <string.h>
+#include <vector>
+#include <sys/types.h>
+#include <dirent.h>
+#include <utilities.h>
 #include <fs.h>
-namespace os { namespace fs {
 
-bool RemoveDirOnly(const char* path) {
-  directory_iterator dirs(path, true);
-  directory_iterator end;
-  while (dirs != end) {
-    RemoveDirOnly(dirs->abspath());
-    ++dirs;
-  }
-  return ::remove(path);
-}
+namespace os {namespace fs {
+struct DirData {
+  std::string dirpath;
+  dirent entry;
+  dirent* result;
+  DIR* dir;
+};
 
-bool RemoveDir(const char* path) {
-  directory_iterator dirs(path, true);
-  directory_iterator end;
-  while (dirs != end) {
-    if (dirs->IsFile()) {
-      bool ret = (::remove(dirs->abspath()) != -1);
-      if (!ret) {
-        return ret;
-      }
-    }
-    ++dirs;
-  }  
-  return RemoveDirOnly(path);
-}
+class Dir {
+ public :
+  static bool Open(const char* path, DirData* data);
+  static void Close(DirData* data);
+  static bool NextEntry(DirData* data);
+  static DirEntry* CreateFirstEntry(DirData* data, memory::Pool* pool);
+  static DirEntry* CreateNextEntry(DirData* data, memory::Pool* pool);
+};
 
-bool Remove(const char* path) {
-  Stat stat(path);
-  if (stat.IsExist()) {
-    if (stat.IsDir()) {
-      return RemoveDir(path);
-    }
-    return (::remove(path) != -1);
-  } else {
-    return false;
-  }
-}
 }}
+
+#endif
+

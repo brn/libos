@@ -20,7 +20,7 @@ class MutexHolder : private Static {
 
 os::Mutex MutexHolder::mutex;
 
-bool mkdir(const char* path, int permiss) {
+bool CreateDirectory(const char* path, int permiss) {
   os::ScopedLock lock(MutexHolder::mutex);
   int len = strlen(path);
   if (len > 0) {

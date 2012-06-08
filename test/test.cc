@@ -3,12 +3,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+class t {
+ public :
+  bool operator()(os::fs::DirEntry* ent) {
+    os::fs::Path path(ent->abspath());
+    if (path.HasExtension()) {
+      return strcmp(path.extension(), "js") == 0;
+    }
+    return false;
+  }
+};
+
 int main (int argc, char** args) {
   printf("%s\n", os::fs::Path::current_directory());
   const char* target = (argc > 1)? args[1] : "../";
   os::fs::directory_iterator it(target, true);
   for (; it != os::fs::directory_iterator::end(); ++it) {
-    os::Printf("%s\n", it->abspath());
+     os::Printf("%s\n", it->abspath());
   }
   /*
   int i;

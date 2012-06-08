@@ -151,7 +151,8 @@
           'PREBINDING': 'NO',                       # No -Wl,-prebind
           'USE_HEADERMAP': 'NO',
           'OTHER_CFLAGS': [
-            '-fno-strict-aliasing',
+            '-O3',
+            '-fno-strict-aliasing'
           ],
           'WARNING_CFLAGS': [
             '-Wall',

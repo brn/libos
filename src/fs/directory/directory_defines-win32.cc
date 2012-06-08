@@ -52,11 +52,11 @@ DirEntry* Dir::CreateNextEntry(DirData* data, memory::Pool* pool) {
     std::string abspath;
     os::SPrintf(&abspath, "%s/%s", data->dirpath.c_str(), data->ffdata.cFileName);
     os::fs::Path path_info(abspath.c_str());
-    const char* dir = ((is_dir)? path_info.absolute_path() : path_info.directory());
-    return new(pool) DirEntry(data->ffdata.cFileName, dir, path_info.absolute_path(), is_dir);
+    return new(pool) DirEntry(data->ffdata.cFileName, path_info.directory(), path_info.absolute_path(), is_dir);
   } else {
     return NULL;
   }
 }
 
 }}
+

@@ -51,6 +51,7 @@ FILE* FileOpen(const char* path, const char* mode) {
       FATAL(footprint.c_str());
     }
   }
+  return NULL;
 }
 
 template <const char* info_type>
@@ -74,7 +75,7 @@ FILE* Rotate(const char* path, const char* mode, FILE* fp) {
     os::Time(&time);
     os::LocalTime(&date, &time);
     os::SPrintf(&buf, "%s-%d%d%d%d", path, date.tm_year + 1900, date.tm_mon, date.tm_mday, date.tm_hour);
-    os::fs::mv(path, buf.c_str());
+    os::fs::Move(path, buf.c_str());
     os::FClose(fp);
     return FileOpen(path, mode);
   }

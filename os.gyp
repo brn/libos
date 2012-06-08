@@ -26,7 +26,8 @@
       'type': '<(library)',
       'include_dirs': [
         'include',
-        'src/'        
+        'src/',
+        'include/lib/sparsehash-2.0.2/src/'
       ],
       'direct_dependent_settings': {
         'include_dirs': [ 'include' ],
@@ -64,6 +65,7 @@
         'include/smart_pointer/scoped_ptr.h',
         'include/smart_pointer/shared_ptr.h',
         'src/lib/unordered_map.h',
+        'src/fs/directory/directory.cc',
         'src/fs/path/path.cc',
         'src/fs/mv/mv.cc',
         'src/fs/rm/rm.cc',
@@ -81,7 +83,6 @@
           'sources': [
             'src/utils/utils-win32.cc',
             'src/thread/thread-win32.cc',
-            'src/fs/directory/directory-win32.cc',
             'src/fs/event/win32/fs_watcher_win32.cc',
             'src/fs/directory/directory_defines-win32.h',
             'src/fs/directory/directory_defines-win32.cc'
@@ -101,7 +102,8 @@
           'sources': [
             'src/utils/utils-posix.cc',
             'src/thread/thread-posix.cc',
-            'src/fs/directory/directory-posix.cc'
+            'src/fs/directory/directory_defines-posix.h',
+            'src/fs/directory/directory_defines-posix.cc'
           ]
         }],
         [ 'OS=="mac"', {

@@ -3,16 +3,33 @@ import glob
 import os
 import shlex
 import sys
-
+import gyp
 script_dir = os.path.dirname(__file__)
 root = os.path.normpath(script_dir)
-import gyp
+sys.path.insert(0, os.path.join(root, 'tools/'))
+
+
+import config_builder
 
 # Directory within which we want all generated files (including Makefiles)
 # to be written.
 output_dir = os.path.join(os.path.abspath(root), 'out')
 
 def run_gyp(args):
+  builder = config_builder.ConfigBuilder([
+      "unordered_map",
+      "tr1/unordered_map",
+      "boost/unordered_map.hpp",
+      'thread',
+      'tr1/thread',
+      'boost/thread.hpp',
+      'tuple',
+      'tr1/tuple',
+      'boost/tuple',
+      'atomic',
+      'tr1/atomic'
+      ], './')
+  builder.Build()
   rc = gyp.main(args)
   if rc != 0:
     print 'Error running GYP'

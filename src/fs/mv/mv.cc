@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <fs.h>
 namespace os { namespace fs {
-bool mv(const char* old_path, const char* new_path) {
+bool Move(const char* old_path, const char* new_path) {
   return ::rename(old_path, new_path);
 }
 }}

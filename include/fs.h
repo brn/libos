@@ -28,30 +28,35 @@
 #include "defines.h"
 #include "thread.h"
 #include "utilities.h"
+#include "notificator/listener_adapter.h"
 namespace os { namespace fs {
 class Path {
  public :
   Path(const char* path);
-  ~Path(){}
+  ~Path();
   const char* raw_path() const { return raw_; }
-  const char* absolute_path() const { return fullpath_.c_str(); }
-  const char* filename() const { return filename_.c_str(); }
-  const char* directory() const { return directory_.c_str(); }
-  bool HasFilename() const { return !filename_.empty(); }
-  bool HasDirectory() const { return !directory_.empty(); }
-  bool HasAbsolutePath() const { return !fullpath_.empty(); }
+  const char* absolute_path() const { return fullpath_; }
+  const char* filename() const { return filename_; }
+  const char* directory() const { return directory_; }
+  const char* extension() const {return ext_;}
+  bool HasFilename() const { return filename_ != NULL; }
+  bool HasDirectory() const { return directory_ != NULL; }
+  bool HasAbsolutePath() const { return fullpath_ != NULL; }
+  bool HasExtension() const { return ext_ != NULL; }
   static const char* current_directory();
   static const char* home_directory();
   static const char* relative_path(const char* base, const char* dest, std::string* buf);
   static void NormalizePath(const char* path, std::string* buf);
  private :
+  static void ReleaseCurrentDirectory();
+  static void ReleaseHomeDirectory();
   char* raw_;
-  std::string fullpath_;
-  std::string filename_;
-  std::string directory_;
-  static std::string current_dir_;
-  static std::string user_home_;
-  static std::string current_path_;
+  char* fullpath_;
+  char* filename_;
+  char* directory_;
+  char* ext_;
+  static char* current_dir_;
+  static char* user_home_;
 };
 
 class Stat{
@@ -94,8 +99,8 @@ class Stat{
 #endif
 };
 
-bool mv(const char* old_path, const char* new_path);
-bool rm(const char* path);
+bool Move(const char* old_path, const char* new_path);
+bool Remove(const char* path);
 class DirFinder;
 struct DirData;
 class DirEntry : public memory::Allocated {
@@ -103,53 +108,75 @@ class DirEntry : public memory::Allocated {
   friend class DirFinder;
  public :
   DirEntry(const char* path, const char* dir, const char* fullpath, bool is_dir)
-      : is_dir_(is_dir),
-        name_(path),
-        dir_(dir),
-        full_path_(fullpath),
-        next_(0){}
+      : is_dir_(is_dir) {
+    name_ = os::Strdup(path);
+    dir_ = os::Strdup(dir);
+    full_path_ = os::Strdup(fullpath);
+  }
   ~DirEntry(){};
-  const char* name() const { return name_.c_str(); };
-  const char* abspath() const { return full_path_.c_str(); };
-  const char* dirname() const { return dir_.c_str(); };
+  const char* name() const { return name_; };
+  const char* abspath() const { return full_path_; };
+  const char* dirname() const { return dir_; };
   bool IsDir() const {return is_dir_;}
   bool IsFile() const {return !is_dir_;}  
  private :
-  DirEntry() : next_(0){}
-  void SetNext(DirEntry* ent) { next_ = ent; };
+  DirEntry(){}
   bool is_dir_;
-  std::string name_;
-  std::string dir_;
-  std::string full_path_;
-  const DirEntry* next_;
+  char* name_;
+  char* dir_;
+  char* full_path_;
 };
 
 class directory_iterator : public std::iterator<std::forward_iterator_tag, const DirEntry*> {
  public :
-  explicit directory_iterator(const char* path, bool recursive = false);
+  directory_iterator(const char* path, bool recursive = false);
+  directory_iterator(const std::string& path, bool recursive = false);
+  directory_iterator(const Path& path_info, bool recursive = false);
+  template <typename FilterT>
+  directory_iterator(const char* path, FilterT f, bool recursive = false)
+      : recursive_(recursive),
+        dir_data_(NULL),
+        current_entry_(NULL),
+        filter_base_(new Filter<FilterT>(f)) {Initialize(path);}
+  
   directory_iterator();
   directory_iterator(const directory_iterator&);
   ~directory_iterator();
   const directory_iterator& operator = (const directory_iterator&);
-  const DirEntry& operator*() const;
+  const DirEntry* operator*() const;
   const DirEntry* operator->() const;
   directory_iterator& operator ++();
   bool operator !=(const directory_iterator&) const;
   static const directory_iterator& end();
  private :
+  class FilterBase {
+   public :
+    virtual bool Invoke(DirEntry* ent) = 0;
+  };
+  template <typename T>
+  class Filter : public FilterBase {
+   public :
+    Filter(T fn)
+    : fn_(fn) {}
+    virtual bool Invoke(DirEntry* ent) {return Dereferrence<T>::Get(fn_)(ent);}
+   private :
+    T fn_;
+  };
   void Initialize(const char* path);
   void CreateDirEnt();
+  void ReadDirectory(bool);
   bool recursive_;
   std::vector<DirEntry*> sub_;
   DirData* dir_data_;
   DirEntry* current_entry_;
   memory::Pool pool_;
+  FilterBase* filter_base_;
 };
 
 void ChangeDirectory(const char* path);
 void Chmod(const char* path, int permiss);
 
-bool mkdir(const char* path, int permiss);
+bool CreateDirectory(const char* path, int permiss);
 
 class FSWatcher;
 class FSEvent {
