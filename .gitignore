@@ -9,3 +9,4 @@ Debug
 *.suo
 *.user
 config.h
+.config_tmp
