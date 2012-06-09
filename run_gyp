@@ -17,6 +17,7 @@ output_dir = os.path.join(os.path.abspath(root), 'out')
 
 def run_gyp(args):
   builder = config_builder.ConfigBuilder([
+      'stdint.h',
       "unordered_map",
       "tr1/unordered_map",
       "boost/unordered_map.hpp",
@@ -30,10 +31,10 @@ def run_gyp(args):
       'tr1/atomic'
       ], './')
   builder.Build()
-  rc = gyp.main(args)
+  """rc = gyp.main(args)
   if rc != 0:
     print 'Error running GYP'
-    sys.exit(rc)
+    sys.exit(rc)"""
 
 if __name__ == '__main__':
   args = sys.argv[1:]
