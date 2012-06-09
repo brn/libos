@@ -10,3 +10,6 @@ Debug
 *.user
 config.h
 .config_tmp
+*.idb
+*.pdb
+.config.tmp
