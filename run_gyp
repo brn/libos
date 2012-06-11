@@ -23,7 +23,7 @@ def run_gyp(args):
     builder.CheckLibAndHeader(True, [
         {
           'header' : ['boost/thread.hpp'],
-          'lib' : ['boost_thread_vc100-mt-1_47.lib', 'boost_thread_vc100-mt-gd-1_47.lib']
+          'lib' : ['boost_thread-vc100-mt-1_47.lib', 'boost_thread-vc100-mt-gd-1_47.lib', 'libboost_thread-mt.a']
         }
     ], 'boost/thread is required.')
   builder.CheckHeader(True, ['tuple', 'tr1/tuple', 'boost/tuple'], 'tuple required.')
@@ -66,8 +66,6 @@ if __name__ == '__main__':
     args.extend(['-Goutput_dir=' + output_dir])
     # Create Makefiles, not XCode projects
     args.extend('-f make'.split())
-  else :
-    os.system("vcvarsall.bat")
 
   args.append('-Dtarget_arch=ia32')
   args.append('-Dcomponent=static_library')

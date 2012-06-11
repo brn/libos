@@ -41,34 +41,35 @@ class ConfigBuilder :
 
     def _Check(self, must, config_list, message, lib) :
         success = False
-        for target in config_list :
-            print 'checking for ' + target + '...',
-            head = ''
-            if not lib :
-                head = '#include <' + target + '>\n'
-            head += '''int main() {
+        if not os.path.isfile(self._path_to_config_h) :
+            for target in config_list :
+                print 'checking for ' + target + '...',
+                head = ''
+                if not lib :
+                    head = '#include <' + target + '>\n'
+                head += '''int main() {
                          return 0;
                        }\n'''
-            value = re.sub(_sub, '_', target).upper()
-            filename = _dirname + '/' + value.lower() + '.cc'
-            test_file = open(filename, 'w+')
-            test_file.write(head)
-            test_file.close()
-            if self._RunChecking(filename, value.lower(), target, lib) == 0 :
-                if not self._success_list.has_key('HAVE_' + value) :
-                    self._success_list['HAVE_' + value] = 1
-                    print ' yes'
+                value = re.sub(_sub, '_', target).upper()
+                filename = _dirname + '/' + value.lower() + '.cc'
+                test_file = open(filename, 'w+')
+                test_file.write(head)
+                test_file.close()
+                if self._RunChecking(filename, value.lower(), target, lib) == 0 :
+                    if not self._success_list.has_key('HAVE_' + value) :
+                        self._success_list['HAVE_' + value] = 1
+                        print ' yes'
+                    else :
+                        break;
+                    success = True
+                    break
                 else :
-                    break;
-                success = True
-                break
-            else :
-                success = False
-                print ' no'
-                if must and not success :
-                    print message
-                    sys.exit(1)
-        return success
+                    success = False
+                    print ' no'
+            if must and not success :
+                print message
+                sys.exit(1)
+            return success
 
     def _RunChecking(self, name, obj, raw_name, lib) :
         if _id == 'Windows' or id == 'Microsoft':
@@ -76,7 +77,8 @@ class ConfigBuilder :
             if not lib :
                 ret = subprocess.call('cl.exe ' + _cl_options + name, stdout=subprocess.PIPE)
             else :
-                ret = subprocess.call('cl.exe "' + raw_name + '" ' + name, stdout=subprocess.PIPE)
+                subprocess.call('cl.exe /nologo /Fo ' + name, stdout=subprocess.PIPE)
+                ret = subprocess.call('link.exe /nologo "' + raw_name + '" "' + obj + '.obj"', stdout=subprocess.PIPE)
             if ret == 0 :
                 os.system('del /Q ' + obj + '.*')
             elif ret != 0 and os.path.isfile(obj + '.obj') and not lib :
@@ -88,10 +90,10 @@ class ConfigBuilder :
             return ret
         else :
             if not lib :
-                ret = commands.getstatusoutput('g++ ' + name)[0]
+                ret = commands.getstatusoutput('g++ -c' + name)[0]
             else :
                 if raw_name.endswith('.so') :
-                    ret = commands.getstatusoutput('g++ ' + name + ' -l ' + raw_name)[0]
+                    ret = commands.getstatusoutput('g++' + name + ' -l ' + raw_name)[0]
                 else :
                     ret = commands.getstatusoutput('g++ ' + name + ' ' + raw_name)[0]
             os.system('rm a.out')
