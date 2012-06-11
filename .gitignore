@@ -9,8 +9,10 @@ Debug
 *.suo
 *.user
 config.h
+libos_config.h
 .config_tmp
 *.idb
 *.pdb
 .config.tmp
 .DS_Store
+ipch

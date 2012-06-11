@@ -16,25 +16,23 @@ import config_builder
 output_dir = os.path.join(os.path.abspath(root), 'out')
 
 def run_gyp(args):
-  builder = config_builder.ConfigBuilder([
-      'stdint.h',
-      "unordered_map",
-      "tr1/unordered_map",
-      "boost/unordered_map.hpp",
-      'thread',
-      'tr1/thread',
-      'boost/thread.hpp',
-      'tuple',
-      'tr1/tuple',
-      'boost/tuple',
-      'atomic',
-      'tr1/atomic'
-      ], './')
+  builder = config_builder.ConfigBuilder('include/libos_config.h')
+  builder.CheckHeader(False, ['stdint.h'], '')
+  builder.CheckHeader(True, ["unordered_map", "tr1/unordered_map", "boost/unordered_map.hpp"], 'unordered_map required.')
+  if not builder.CheckHeader(False, ['thread', 'tr1/thread'], '') :
+    builder.CheckLibAndHeader(True, [
+        {
+          'header' : ['boost/thread.hpp'],
+          'lib' : ['boost_thread_vc100-mt-1_47.lib', 'boost_thread_vc100-mt-gd-1_47.lib']
+        }
+    ], 'boost/thread is required.')
+  builder.CheckHeader(True, ['tuple', 'tr1/tuple', 'boost/tuple'], 'tuple required.')
+  builder.CheckHeader(False, ['atomic', 'tr1/atomic'], 'atomic required.')
   builder.Build()
-  """rc = gyp.main(args)
+  rc = gyp.main(args)
   if rc != 0:
     print 'Error running GYP'
-    sys.exit(rc)"""
+    sys.exit(rc)
 
 if __name__ == '__main__':
   args = sys.argv[1:]
