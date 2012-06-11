@@ -16,3 +16,5 @@ libos_config.h
 .config.tmp
 .DS_Store
 ipch
+*.obj
+*.o
