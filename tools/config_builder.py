@@ -6,7 +6,7 @@ _dirname = './.config.tmp'
 _sub = re.compile(r'[\.\-\/]')
 _id = platform.system()
 _cl_options = '/ZI /nologo /W3 /WX- /Od /Oy- /D "DEBUG" /D "NOMINMAX" /D "_MBCS" /D "PLATFORM_WIN32" /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Gd /analyze- /errorReport:queue '
-
+_lib_path = ('/usr/local/lib', '/opt/local/lib', '/usr/lib', '/lib')
 class ConfigBuilder :
 
     def __init__(self, path_to_config_h) :
@@ -90,12 +90,21 @@ class ConfigBuilder :
             return ret
         else :
             if not lib :
-                ret = commands.getstatusoutput('g++ -c' + name)[0]
+                ret = commands.getstatusoutput('g++ -c ' + name)[0]
+                if ret == 0 :
+                    os.system('rm ' + obj + '.o')
             else :
                 if raw_name.endswith('.so') :
-                    ret = commands.getstatusoutput('g++' + name + ' -l ' + raw_name)[0]
+                    ret = commands.getstatusoutput('g++ ' + name + ' -l ' + raw_name)[0]
                 else :
-                    ret = commands.getstatusoutput('g++ ' + name + ' ' + raw_name)[0]
-            os.system('rm a.out')
+                    ret = commands.getstatusoutput('g++ ' + raw_name + ' ' + name)[0]
+                    if ret != 0 :
+                        for path in _lib_path :
+                            if os.path.isdir(path) :
+                                ret = commands.getstatusoutput('g++ ' + path + '/' + raw_name + ' ' + name)[0]
+                                if ret == 0 :
+                                    break
+                    if ret == 0 :
+                        os.system('rm a.out')
             return ret
             
