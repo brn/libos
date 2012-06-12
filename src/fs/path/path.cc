@@ -90,7 +90,7 @@ char* GetFileNameFromPath(const char* path, char* buffer) {
 
 char* ConvertBackSlash(const char* path, char* buffer) {
   buffer = os::Strdup(path);
-  for (int i = 0; buffer[i]; i++) {
+  for (int i = 0; buffer[i] != 0; i++) {
     if (buffer[i] == '\\') {
       buffer[i] = '/';
     }
@@ -101,10 +101,10 @@ char* ConvertBackSlash(const char* path, char* buffer) {
 char* GetExtension(const char* path, char* buffer) {
   bool has = false;
   int begin = strlen(path) - 1;
-  for (int i = begin; path[i]; i--) {
+  for (int i = begin; i < -1; i--) {
     if (path[i] == '.' && i < begin) {
       has = true;
-      buffer = os::Strdup(&path[i + 1]);
+      buffer = os::Strdup(&(path[i + 1]));
       break;
     }
   }
@@ -122,10 +122,14 @@ char* GetAbsolutePath(const char* path, char* buffer, bool* is_success = 0) {
   char *tmp;
   FULL_PATH(path, tmp);
   if (tmp != NULL) {
+#ifdef PLATFORM_WIN32
     buffer = ConvertBackSlash(tmp, buffer);
+#else
+    buffer = os::Strdup(tmp);
+#endif
     free(tmp);
   } else {
-    if (is_success) {
+    if ((*is_success)) {
       (*is_success) = false;
     }
     buffer = os::Strdup(path);
@@ -135,7 +139,7 @@ char* GetAbsolutePath(const char* path, char* buffer, bool* is_success = 0) {
 
 void Path::NormalizePath(const char* path, std::string* buffer) {
   int size = strlen(path);
-  char* buf;
+  char* buf = NULL;
   buf = ConvertBackSlash(path, buf);
   buffer->assign(buf);
   free(buf);
@@ -220,6 +224,7 @@ Path::~Path() {
   if (fullpath_ != NULL) {free(fullpath_);}
   if (filename_ != NULL) {free(filename_);}
   if (directory_ != NULL) {free(directory_);}
+  if (ext_ != NULL) {free(ext_);}
 }
 
 const char* Path::current_directory() {
@@ -265,7 +270,7 @@ const char* Path::home_directory() {
     std::string buf;
     os::SPrintf(&buf, "%s/%s", drive, home);
     user_home_ = os::Strdup(buf.c_str());
-    GetAbsolutePath(user_home_, user_home_);
+    user_home_ = GetAbsolutePath(user_home_, user_home_);
     return user_home_;
   }
   return 0;

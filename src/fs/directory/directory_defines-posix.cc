@@ -34,28 +34,26 @@ bool Dir::NextEntry(DirData* data) {
   return readdir_r(data->dir, &(data->entry), &(data->result)) == 0 && data->result != NULL;
 }
 
-DirEntry* Dir::CreateFirstEntry(DirData* data, memory::Pool* pool) {
+DirEntry* Dir::CreateFirstEntry(DirData* data) {
   if (data->dir != NULL) {
     std::string abspath;
     os::SPrintf(&abspath, "%s/%s", data->dirpath.c_str(), data->result->d_name);
     os::fs::Stat stat(abspath.c_str());
     bool is_dir = stat.IsDir();
-    os::fs::Path file_path_info(abspath.c_str());
-    os::fs::Path dir_path_info(data->dirpath.c_str());
-    return new(pool) DirEntry(data->result->d_name, dir_path_info.absolute_path(), file_path_info.absolute_path(), is_dir);
+    return new DirEntry(data->result->d_name, data->dirpath.c_str(), abspath.c_str(), is_dir);
   } else {
     return NULL;
   }
 }
 
-DirEntry* Dir::CreateNextEntry(DirData* data, memory::Pool* pool) {
+DirEntry* Dir::CreateNextEntry(DirData* data, DirEntry* entry) {
   if (data->dir != NULL) {
     std::string abspath;
     os::SPrintf(&abspath, "%s/%s", data->dirpath.c_str(), data->result->d_name);
     os::fs::Stat stat(abspath.c_str());
     bool is_dir = stat.IsDir();
-    os::fs::Path path_info(abspath.c_str());
-    return new(pool) DirEntry(data->result->d_name, path_info.directory(), path_info.absolute_path(), is_dir);
+    entry->Swap(data->result->d_name, data->dirpath.c_str(), abspath.c_str(), is_dir);
+    return entry;
   } else {
     return NULL;
   }

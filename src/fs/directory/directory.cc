@@ -78,12 +78,20 @@ directory_iterator::directory_iterator()
 
 directory_iterator::directory_iterator(const directory_iterator& iterator)
     : recursive_(iterator.recursive_),
-      dir_data_(iterator.dir_data_),
-      current_entry_(iterator.current_entry_){}
+      dir_data_(iterator.dir_data_) {
+  if (current_entry_ != NULL) {
+    delete current_entry_;
+  }
+  current_entry_ = iterator.current_entry_;
+}
 
 directory_iterator::~directory_iterator() {
   if (dir_data_ != NULL) {
+    Dir::Close(dir_data_);
     delete dir_data_;
+  }
+  if (current_entry_ != NULL) {
+    delete current_entry_;
   }
   if (filter_base_ != NULL) {
     delete filter_base_;
@@ -103,6 +111,9 @@ const directory_iterator& directory_iterator::operator = (const directory_iterat
   recursive_ = iterator.recursive_;
   sub_ = iterator.sub_;
   dir_data_ = iterator.dir_data_;
+  if (current_entry_ != NULL) {
+    delete current_entry_;
+  }
   current_entry_ = iterator.current_entry_;
   return (*this);
 }
@@ -129,29 +140,32 @@ bool directory_iterator::operator != (const directory_iterator& iter) const {
 void directory_iterator::CreateDirEnt() {
   if (dir_data_ != NULL) {
     current_entry_ = (current_entry_ != NULL)?
-        Dir::CreateNextEntry(dir_data_, &pool_) : Dir::CreateFirstEntry(dir_data_, &pool_);
+        Dir::CreateNextEntry(dir_data_, current_entry_) : Dir::CreateFirstEntry(dir_data_);
   }
 }
 
 
 void directory_iterator::ReadDirectory(bool success) {
   if (!success) {
-    current_entry_ = NULL;
+    if (current_entry_ != NULL) {
+      delete current_entry_;
+      current_entry_ = NULL;
+    }
   } else {
     CreateDirEnt();
     if (current_entry_ != NULL && current_entry_->IsDir() && recursive_) {
-      sub_.push_back(current_entry_);
+      sub_.push_back(std::string(current_entry_->abspath()));
     }
     if (current_entry_ != NULL && filter_base_ != NULL) {
       if (!filter_base_->Invoke(current_entry_)) {operator++();}
     }
   }
   if (current_entry_ == NULL && recursive_ && sub_.size() > 0) {
-    DirEntry* entry = sub_.back();
+    std::string abspath = sub_.back();
     sub_.pop_back();
-    const char* abspath = entry->abspath();
-    Initialize(abspath);
+    Initialize(abspath.c_str());
   } else if (current_entry_ == NULL) {
+    Dir::Close(dir_data_);
     delete dir_data_;
     dir_data_ = NULL;
   }

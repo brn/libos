@@ -16,8 +16,8 @@ class Dir {
   static bool Open(const char* path, DirData* data);
   static void Close(DirData* data);
   static bool NextEntry(DirData* data);
-  static DirEntry* CreateFirstEntry(DirData* data, memory::Pool* pool);
-  static DirEntry* CreateNextEntry(DirData* data, memory::Pool* pool);
+  static DirEntry* CreateFirstEntry(DirData* data);
+  static DirEntry* CreateNextEntry(DirData* data, DirEntry* entry);
 };
   
 }}

@@ -1,19 +1,18 @@
 #ifndef OS_INCLUDE_FS_DIRECOTRY_H_
 #define OS_INCLUDE_FS_DIRECOTRY_H_
 namespace os { namespace fs {
-class DirFinder;
 struct DirData;
-class DirEntry : public memory::Allocated {
+class Dir;
+class DirEntry {
   friend class Directory;
-  friend class DirFinder;
+  friend struct DirData;
+  friend class Dir;
  public :
-  DirEntry(const char* path, const char* dir, const char* fullpath, bool is_dir)
-      : is_dir_(is_dir) {
-    name_ = os::Strdup(path);
-    dir_ = os::Strdup(dir);
-    full_path_ = os::Strdup(fullpath);
-  }
-  ~DirEntry(){};
+  ~DirEntry() {
+    free(name_);
+    free(dir_);
+    free(full_path_);
+  };
   const char* name() const { return name_; };
   const char* abspath() const { return full_path_; };
   const char* dirname() const { return dir_; };
@@ -21,6 +20,21 @@ class DirEntry : public memory::Allocated {
   bool IsFile() const {return !is_dir_;}  
  private :
   DirEntry(){}
+  DirEntry(const char* path, const char* dir, const char* fullpath, bool is_dir)
+      : is_dir_(is_dir) {
+    name_ = os::Strdup(path);
+    dir_ = os::Strdup(dir);
+    full_path_ = os::Strdup(fullpath);
+  }
+  void Swap(const char* path, const char* dir, const char* fullpath, bool is_dir) {
+    free(name_);
+    free(dir_);
+    free(full_path_);
+    name_ = os::Strdup(path);
+    dir_ = os::Strdup(dir);
+    full_path_ = os::Strdup(fullpath);
+    is_dir_ = is_dir;
+  }
   bool is_dir_;
   char* name_;
   char* dir_;
@@ -66,10 +80,9 @@ class directory_iterator : public std::iterator<std::forward_iterator_tag, const
   void CreateDirEnt();
   void ReadDirectory(bool);
   bool recursive_;
-  std::vector<DirEntry*> sub_;
+  std::vector<std::string> sub_;
   DirData* dir_data_;
   DirEntry* current_entry_;
-  memory::Pool pool_;
   FilterBase* filter_base_;
 };
 }}

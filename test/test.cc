@@ -1,3 +1,10 @@
+#ifdef PLATFORM_WIN32
+#if DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#endif
+#endif
 #include "../include/fs.h"
 #include "../include/utilities.h"
 #include <stdio.h>
@@ -15,6 +22,9 @@ class t {
 };
 
 int main (int argc, char** args) {
+#ifdef PLATFORM_WIN32
+  ::_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
   printf("%s\n", os::fs::Path::current_directory());
   const char* target = (argc > 1)? args[1] : "../";
   os::fs::directory_iterator it(target, true);

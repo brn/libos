@@ -4,7 +4,7 @@
 #include <locale>
 #include <logging.h>
 #include <fs.h>
-#include <fs_watcher_win32.h>
+#include <fs_include/fs_watcher_win32.h>
 namespace os { namespace fs {
 typedef SharedPtr<FSEvent> FSEventHandle;
 typedef std::pair<const char*, HandleDataHandle> DirPair;

@@ -33,26 +33,24 @@ bool Dir::NextEntry(DirData* data) {
   return FindNextFile(data->h_find, &(data->ffdata));
 }
 
-DirEntry* Dir::CreateFirstEntry(DirData* data, memory::Pool* pool) {
+DirEntry* Dir::CreateFirstEntry(DirData* data) {
   if (data->h_find != INVALID_HANDLE_VALUE) {
     bool is_dir = data->ffdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
     std::string abspath;
     os::SPrintf(&abspath, "%s/%s", data->dirpath.c_str(), data->ffdata.cFileName);
-    os::fs::Path file_path_info(abspath.c_str());
-    os::fs::Path dir_path_info(data->dirpath.c_str());
-    return new(pool) DirEntry(data->ffdata.cFileName, dir_path_info.absolute_path(), file_path_info.absolute_path(), is_dir);
+    return new DirEntry(data->ffdata.cFileName, data->dirpath.c_str(), abspath.c_str(), is_dir);
   } else {
     return NULL;
   }
 }
 
-DirEntry* Dir::CreateNextEntry(DirData* data, memory::Pool* pool) {
+DirEntry* Dir::CreateNextEntry(DirData* data, DirEntry* entry) {
   if (data->h_find != INVALID_HANDLE_VALUE) {
     bool is_dir = data->ffdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
     std::string abspath;
     os::SPrintf(&abspath, "%s/%s", data->dirpath.c_str(), data->ffdata.cFileName);
-    os::fs::Path path_info(abspath.c_str());
-    return new(pool) DirEntry(data->ffdata.cFileName, path_info.directory(), path_info.absolute_path(), is_dir);
+    entry->Swap(data->ffdata.cFileName, data->dirpath.c_str(), abspath.c_str(), is_dir);
+    return entry;
   } else {
     return NULL;
   }

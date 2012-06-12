@@ -13,10 +13,10 @@ typedef roastlib::unordered_map<int,  FSEventHandle> InotifyFDMap;
 typedef unsigned long InotifyMask;
 typedef SharedPtr<inotify_event> EventHandle;
 typedef struct inotify_event InotifyEvent;
-class FSWatcherPlt : public Notificator<FSEvent*>{
+class FSWatcher : public Notificator<FSEvent*>{
  public :
-  FSWatcherPlt();
-  ~FSWatcherPlt();
+  FSWatcher();
+  ~FSWatcher();
   void AddWatch(const char* path);
   void RemoveWatch(const char* path);
   void RemoveWatch();

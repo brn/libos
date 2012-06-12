@@ -1,22 +1,21 @@
 #include <string.h>
 #include <sys/epoll.h>
 #include <fs.h>
-#include <fs/event/event.h>
-#include <fs_watcher_linux.h>
+#include <fs_include/fs_watcher_linux.h>
 namespace os { namespace fs {
 static const int kMaxEvents = 10;
 static InotifyMask mask = IN_CLOSE_WRITE | IN_DELETE_SELF | IN_MODIFY;
-FSWatcherPlt::FSWatcherPlt()
+FSWatcher::FSWatcher()
     : is_exit_(false),
       epoll_fd_(epoll_create(10)),
       inotify_fd_(inotify_init()){}
 
-FSWatcherPlt::~FSWatcherPlt() {
+FSWatcher::~FSWatcher() {
   Exit();
   ::close(inotify_fd_);
 }
 
-void FSWatcherPlt::AddWatch(const char* path) {
+void FSWatcher::AddWatch(const char* path) {
   Path path_info(path);
   const char* abpath = path_info.absolute_path();
   Stat stat(abpath);
@@ -26,7 +25,7 @@ void FSWatcherPlt::AddWatch(const char* path) {
   }
 }
 
-void FSWatcherPlt::RemoveWatch(const char* path) {
+void FSWatcher::RemoveWatch(const char* path) {
   Path path_info(path);
   const char* abpath = path_info.absolute_path();
   Stat stat(abpath);
@@ -41,7 +40,7 @@ void FSWatcherPlt::RemoveWatch(const char* path) {
   }
 }
 
-void FSWatcherPlt::RemoveWatch() {
+void FSWatcher::RemoveWatch() {
   ScopedLock lock(mutex_);
   InotifyFDMap::iterator it = fd_map_.begin();
   for (; it != fd_map_.end(); ++it) {
@@ -50,7 +49,7 @@ void FSWatcherPlt::RemoveWatch() {
   fd_map_.clear();
 }
 
-bool FSWatcherPlt::IsWatched(const char* path) const {
+bool FSWatcher::IsWatched(const char* path) const {
   Path path_info(path);
   const char* abpath = path_info.absolute_path();
   int wd = inotify_add_watch(inotify_fd_, abpath, mask);
@@ -62,7 +61,7 @@ bool FSWatcherPlt::IsWatched(const char* path) const {
   return false;
 }
 
-void FSWatcherPlt::Regist(const char* abpath) {
+void FSWatcher::Regist(const char* abpath) {
   int wd = inotify_add_watch(inotify_fd_, abpath, mask);
   InotifyFDMap::iterator it = fd_map_.find(wd);
   if (it == fd_map_.end()) {
@@ -71,30 +70,30 @@ void FSWatcherPlt::Regist(const char* abpath) {
   }
 }
 
-void* FSWatcherPlt::ThreadRunner(void* arg) {
-  FSWatcherPlt* watcher = reinterpret_cast<FSWatcherPlt*>(arg);
+void* FSWatcher::ThreadRunner(void* arg) {
+  FSWatcher* watcher = reinterpret_cast<FSWatcher*>(arg);
   watcher->Start();
   return 0;
 }
 
-void FSWatcherPlt::Run() {
+void FSWatcher::Run() {
   Thread thread;
   thread.Create(ThreadRunner, this);
   thread.Join();
 }
 
-void FSWatcherPlt::RunAsync() {
+void FSWatcher::RunAsync() {
   Thread thread;
   thread.Create(ThreadRunner, this);
   thread.Detach();
 }
 
-void FSWatcherPlt::Exit() {
+void FSWatcher::Exit() {
   is_exit_ = true;
   ScopedLock lock(mutex_);
 }
 
-void FSWatcherPlt::Start() {
+void FSWatcher::Start() {
   is_exit_ = false;
   int epfd;
   if((epfd = epoll_create(kMaxEvents)) < 0) {
@@ -120,7 +119,7 @@ void FSWatcherPlt::Start() {
   }
 }
 
-void FSWatcherPlt::ReadInotifyEvents() {
+void FSWatcher::ReadInotifyEvents() {
   int i = 0;
   int aux = 0;
   int ret = 0;
@@ -161,7 +160,7 @@ reread:
     }
     }
 
-void FSWatcherPlt::CheckEvent(InotifyEvent* ev) {
+void FSWatcher::CheckEvent(InotifyEvent* ev) {
   int wd = ev->wd;
   InotifyFDMap::iterator find = fd_map_.find(wd);
   if (find != fd_map_.end()) {
@@ -181,8 +180,8 @@ void FSWatcherPlt::CheckEvent(InotifyEvent* ev) {
   }
 }
 
-const char FSWatcherPlt::kModify[] = {"Modified<inotify>"};
-const char FSWatcherPlt::kUpdate[] = {"Update<inotify>"};
-const char FSWatcherPlt::kDelete[] = {"Delete<inotify>"};
+const char FSWatcher::kModify[] = {"Modified<inotify>"};
+const char FSWatcher::kUpdate[] = {"Update<inotify>"};
+const char FSWatcher::kDelete[] = {"Delete<inotify>"};
 
 }}

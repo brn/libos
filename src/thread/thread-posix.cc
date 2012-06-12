@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <thread.h>
 #include <utilities.h>
+#include <utils/utils.h>
 namespace os {
 Thread::Thread() {
   pthread_attr_init(&thread_attr_t_);

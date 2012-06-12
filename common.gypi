@@ -110,7 +110,7 @@
       }],
       [ 'OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
         'variables': {
-          'gcc_version%': '<!(gcc_version.py)>)',
+          'gcc_version%': '<!(python gcc_version.py)>)',
         },
         'cflags': [ '-Wall' ],
         'cflags_cc': [ '-fno-rtti', '-fno-exceptions' ],
