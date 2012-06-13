@@ -31,6 +31,7 @@ int main (int argc, char** args) {
   for (; it != os::fs::directory_iterator::end(); ++it) {
      os::Printf("%s\n", it->abspath());
   }
+  os::Printf("%s\n", os::fs::Read("test/test.cc").c_str());
   /*
   int i;
 

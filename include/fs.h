@@ -60,6 +60,7 @@ class FSEvent {
 #include "fs_include/fs_path.h"
 #include "fs_include/fs_stat.h"
 #include "fs_include/fs_directory.h"
+#include "fs_include/fs_io.h"
 
 #ifdef PLATFORM_MACOS
 #include "fs_include/fs_watcher_macos.h"
