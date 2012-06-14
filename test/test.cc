@@ -35,7 +35,7 @@ int main (int argc, char** args) {
   }*/
   os::fs::File file("os.gyp", "r");
   std::cout << file << std::endl;
-  //os::Printf("%s\n", os::fs::Read("test/test.cc").c_str());
+  os::Printf("%s\n", os::fs::Read("test/test.cc").c_str());
   /*
   int i;
 

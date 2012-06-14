@@ -59,4 +59,6 @@ bool Remove(const char* path) {
     return false;
   }
 }
+
+bool Remove(const std::string& path) {return Remove(path.c_str());}
 }}

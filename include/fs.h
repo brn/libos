@@ -32,10 +32,19 @@
 
 namespace os { namespace fs {
 bool Move(const char* old_path, const char* new_path);
+bool Move(const std::string& old_path, const std::string& new_path);
 bool Remove(const char* path);
+bool Remove(const std::string& path);
 void ChangeDirectory(const char* path);
+void ChangeDirectory(const std::string& path);
 void Chmod(const char* path, int permiss);
-bool CreateDirectory(const char* path, int permiss);
+void Chmod(const std::string& path, int permiss);
+bool MakeDirectory(const char* path, int permiss);
+bool MakeDirectory(const std::string& path, int permiss);
+bool Copy(const char* src, const char* dest);
+bool CopyTree(const char* src, const char* dest);
+bool Copy(const std::string& src, const std::string& dest);
+bool CopyTree(const std::string& src, const std::string& dest);
 class FSWatcher;
 class FSEvent {
   friend class FSWatcher;

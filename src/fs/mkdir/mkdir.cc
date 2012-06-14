@@ -20,7 +20,7 @@ class MutexHolder : private Static {
 
 os::Mutex MutexHolder::mutex;
 
-bool CreateDirectory(const char* path, int permiss) {
+bool MakeDirectory(const char* path, int permiss) {
   os::ScopedLock lock(MutexHolder::mutex);
   int len = strlen(path);
   if (len > 0) {
@@ -64,5 +64,9 @@ bool CreateDirectory(const char* path, int permiss) {
     return true;
   }
   return false;
+}
+
+bool MakeDirectory(const std::string& path, int permiss) {
+  return MakeDirectory(path.c_str(), permiss);
 }
 }}

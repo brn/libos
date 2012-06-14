@@ -48,6 +48,14 @@ void Chmod(const char* path, int permiss) {
 }
 #endif
 
+void ChangeDirectory(const std::string& path) {
+  ChangeDirectory(path.c_str());
+}
+
+void Chmod(const std::string& path, int permiss) {
+  Chmod(path.c_str(), permiss);
+}
+
 directory_iterator::directory_iterator(const char* path, bool recursive)
     : recursive_(recursive),
       dir_data_(NULL),

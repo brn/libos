@@ -15,7 +15,7 @@ class Stat{
     kSock
   } FileType;
   Stat(const char* path);
-  ~Stat(){};
+  ~Stat();
   bool IsExist() const { return is_exist_; }
   int Dev() const { return fstat_.st_dev;}
   int Ino() const { return fstat_.st_ino; }
@@ -30,9 +30,14 @@ class Stat{
   bool IsDir();
   bool IsReg();
   bool IsChr();
+  bool IsLink();
+  static bool IsExist(const char* path);
+  static bool IsLink(const char* path);
+  static bool IsDir(const char* path);
+  static bool IsReg(const char* path);
  private :
   bool is_exist_;
-  const char* path_;
+  char* path_;
   char atime_[200];
   char mtime_[200];
   char ctime_[200];

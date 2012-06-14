@@ -75,6 +75,7 @@
         'src/fs/event/md5.h',
         'src/fs/event/md5.cc',
         'src/fs/io/fs_io.cc',
+        'src/fs/copy/copy.cc',
         'src/utils/pool.cc',
         'src/utils/utils.h',
         'src/utils/log/logging.cc'

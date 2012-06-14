@@ -25,5 +25,8 @@ namespace os { namespace fs {
 bool Move(const char* old_path, const char* new_path) {
   return ::rename(old_path, new_path);
 }
+bool Move(const std::string& old_path, const std::string& new_path) {
+  return ::rename(old_path.c_str(), new_path.c_str());
+}
 }}
 

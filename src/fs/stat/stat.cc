@@ -16,10 +16,13 @@
 #define MODE (fstat_.st_mode & S_IFMT)
 
 namespace os {namespace fs {
-Stat::Stat(const char* path)
-    : path_(path){
+Stat::Stat(const char* path) {
+  path_ = Strdup(path);
   is_exist_ = (STAT_FN(path, &fstat_) != -1);
 }
+
+Stat::~Stat() {free(path_);}
+
 const char* Stat::ATime() {
   CTIME(&(fstat_.st_atime),atime_);
   return atime_;
@@ -35,4 +38,36 @@ const char* Stat::CTime() {
 bool Stat::IsDir() { return MODE == S_IFDIR; }
 bool Stat::IsReg() { return MODE == S_IFREG; }
 bool Stat::IsChr() { return MODE == S_IFCHR; }
+bool Stat::IsLink() {
+#ifdef PLATFORM_WIN32
+  Path path_info(path_);
+  if (path_info.HasExtension()) {
+    const char* ext = path_info.extension();
+    return strcmp(ext, "lnk") == 0;
+  }
+  return false;
+#else
+  return MODE == S_IFLNK;
+#endif
+}
+
+bool Stat::IsLink(const char* path) {
+  Stat stat(path);
+  return stat.IsLink();
+}
+
+bool Stat::IsDir(const char* path) {
+  Stat stat(path);
+  return stat.IsDir();
+}
+
+bool Stat::IsReg(const char* path) {
+  Stat stat(path);
+  return stat.IsReg();
+}
+
+bool Stat::IsExist(const char* path) {
+  Stat stat(path);
+  return stat.IsExist();
+}
 }}
