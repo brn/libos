@@ -57,18 +57,11 @@ class FSEvent {
 };
 }}
 
-#include "fs_include/fs_path.h"
-#include "fs_include/fs_stat.h"
-#include "fs_include/fs_directory.h"
-#include "fs_include/fs_io.h"
-
-#ifdef PLATFORM_MACOS
-#include "fs_include/fs_watcher_macos.h"
-#elif defined PLATFORM_WIN32
-#include "fs_include/fs_watcher_win32.h"
-#elif defined PLATFORM_POSIX
-#include "fs_include/fs_watcher_linux.h"
-#endif
+#include "fs/fs_path.h"
+#include "fs/fs_stat.h"
+#include "fs/fs_directory.h"
+#include "fs/fs_io.h"
+#include "fs/fs_watcher.h"
 #endif
 
 

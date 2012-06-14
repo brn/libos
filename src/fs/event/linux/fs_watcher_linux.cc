@@ -1,7 +1,7 @@
 #include <string.h>
 #include <sys/epoll.h>
 #include <fs.h>
-#include <fs_include/fs_watcher_linux.h>
+#include <fs/fs_watcher_linux.h>
 namespace os { namespace fs {
 static const int kMaxEvents = 10;
 static InotifyMask mask = IN_CLOSE_WRITE | IN_DELETE_SELF | IN_MODIFY;

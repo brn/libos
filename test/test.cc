@@ -9,7 +9,7 @@
 #include "../include/utilities.h"
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <iostream>
 class t {
  public :
   bool operator()(os::fs::DirEntry* ent) {
@@ -26,12 +26,16 @@ int main (int argc, char** args) {
   ::_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
   printf("%s\n", os::fs::Path::current_directory());
+  /*
+  
   const char* target = (argc > 1)? args[1] : "../";
   os::fs::directory_iterator it(target, true);
   for (; it != os::fs::directory_iterator::end(); ++it) {
      os::Printf("%s\n", it->abspath());
-  }
-  os::Printf("%s\n", os::fs::Read("test/test.cc").c_str());
+  }*/
+  os::fs::File file("os.gyp", "r");
+  std::cout << file << std::endl;
+  //os::Printf("%s\n", os::fs::Read("test/test.cc").c_str());
   /*
   int i;
 

@@ -18,3 +18,4 @@ libos_config.h
 ipch
 *.obj
 *.o
+*.log

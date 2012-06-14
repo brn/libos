@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 #include <utilities.h>
-#include <fs_include/fs_io.h>
+#include <fs/fs_io.h>
 namespace os { namespace fs {
 
 File::File(const char* path, const char* mode) {
@@ -18,17 +18,19 @@ File::~File() {
   }
 }
 
-void InternalReadAll(std::stringstream* st, FILE* fp) {
+void InternalReadAll(std::string* string, FILE* fp) {
   fseek(fp, 0, SEEK_END);
   int size = ftell(fp);
   rewind(fp);
+  char* read_buf = new char[size];
+  string->reserve(size);
   for (int i = 0; i < size;) {
-    char buf[64];
-    int read = fread(&buf, 1, 63, fp);
-    buf[read] = 0;
-    (*st) << buf;
+    int read = fread(read_buf + i, sizeof(char), size - i, fp);
     i += read;
   }
+  read_buf[size - 1] = 0;
+  string->append(read_buf);
+  delete []read_buf;
   rewind(fp);
 }
 
@@ -45,17 +47,15 @@ void InternalReadByte(std::stringstream* st, FILE* fp, int size) {
 
 void File::Read(std::string* buffer) {
   if (fp_ != NULL) {
-    std::stringstream st;
-    InternalReadAll(&st, fp_);
-    buffer->assign(st.str());
+    InternalReadAll(buffer, fp_);
   }
 }
 
 std::string File::Read() {
   if (fp_ != NULL) {
-    std::stringstream st;
-    InternalReadAll(&st, fp_);
-    return st.str();
+    std::string string;
+    InternalReadAll(&string, fp_);
+    return string;
   }
   return std::string("");
 }
@@ -77,20 +77,37 @@ std::string File::Read(int size) {
   return std::string("");
 }
 
+void File::Write(char ch) {
+  if (fp_ != NULL) {
+    char write[2];
+    write[0] = ch;
+    write[1] = 0;
+    fwrite(write, sizeof(char), 1, fp_);
+  }
+}
+
 void File::Write(const char* str) {
-  fwrite(str, sizeof(char), strlen(str), fp_);
+  if (fp_ != NULL) {
+    fwrite(str, sizeof(char), strlen(str), fp_);
+  }
 }
 
 void File::Write(const char* str, int size) {
-  fwrite(str, sizeof(char), size, fp_);
+  if (fp_ != NULL) {
+    fwrite(str, sizeof(char), size, fp_);
+  }
 }
 
 void File::Write(const std::string& str) {
-  fwrite(str.c_str(), sizeof(char), str.size(), fp_);
+  if (fp_ != NULL) {
+    fwrite(str.c_str(), sizeof(char), str.size(), fp_);
+  }
 }
 
 void File::Write(const std::string& str, int size) {
-  fwrite(str.c_str(), sizeof(char), size, fp_);
+  if (fp_ != NULL) {
+    fwrite(str.c_str(), sizeof(char), size, fp_);
+  }
 }
 
 void File::Close() {
@@ -100,6 +117,28 @@ void File::Close() {
   }
 }
 
+File& File::operator << (const char* str) {
+  Write(str);
+  return *this;
+}
+
+File& File::operator << (const std::string& str) {
+  Write(str);
+  return *this;
+}
+
+File& File::operator << (char ch) {
+  Write(ch);
+  return *this;
+}
+
+File& File::operator >> (std::string& buf) {
+  Read(&buf);
+  return *this;
+}
+
+bool File::IsValid() const {return fp_ != NULL;}
+
 void Read(const char* path, std::string* buffer) {
   File file(path, "rb");
   file.Read(buffer);
@@ -108,9 +147,9 @@ void Read(const char* path, std::string* buffer) {
 std::string Read(const char* path) {
   FILE *fp = os::FOpen(path, "rb");
   if (fp != NULL) {
-    std::stringstream st;
-    InternalReadAll(&st, fp);
-    return st.str();
+    std::string string;
+    InternalReadAll(&string, fp);
+    return string;
   }
   return std::string("");
 }
@@ -136,3 +175,11 @@ void Write(const char* path, const std::string& str, int size) {
 }
 
 }}
+
+std::ostream& operator << (std::ostream& os, os::fs::File& file) {
+  std::string str;
+  file.Read(&str);
+  os << str;
+  return os;
+}
+
