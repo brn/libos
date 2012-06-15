@@ -28,6 +28,18 @@ def run_gyp(args):
     ], 'boost/thread is required.')
   builder.CheckHeader(True, ['tuple', 'tr1/tuple', 'boost/tuple'], 'tuple required.')
   builder.CheckHeader(False, ['atomic', 'tr1/atomic'], 'atomic required.')
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::function',
+        'header' : ['functional'],
+        'struct': 'std::function<int (int)>'
+      },
+      {
+        'name' : 'boost::function',
+        'header' : ["boost/function.hpp"],
+        'struct' : 'boost::function<int (int)>'
+      }
+    ], 'function required.')
   builder.Build()
   rc = gyp.main(args)
   if rc != 0:

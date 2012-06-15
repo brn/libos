@@ -3,7 +3,7 @@ import commands
 import re,os
 
 _dirname = './.config.tmp'
-_sub = re.compile(r'[\.\-\/]')
+_sub = re.compile(r'[\.\-\/\<\>]')
 _id = platform.system()
 _cl_options = '/ZI /nologo /W3 /WX- /Od /Oy- /D "DEBUG" /D "NOMINMAX" /D "_MBCS" /D "PLATFORM_WIN32" /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Gd /analyze- /errorReport:queue '
 _lib_path = ('/usr/local/lib', '/opt/local/lib', '/usr/lib', '/lib')
@@ -16,10 +16,10 @@ class ConfigBuilder :
             os.makedirs(_dirname)
 
     def CheckHeader(self, must, config_list, message) :
-        return self._Check(must, config_list, message, False)
+        return self._Check(must, config_list, message)
         
     def CheckLib(self, must, config_list, message) :
-        return self._Check(must, config_list, message, True)
+        return self._Check(must, config_list, message, lib = True)
 
     def CheckLibAndHeader(self, must, config_list, message) :
         success = False
@@ -27,6 +27,9 @@ class ConfigBuilder :
             success = self.CheckHeader(must, config['header'], message)
             success = self.CheckLib(must, config['lib'], message)
         return success
+    
+    def CheckStruct(self, must, config_list, message) :
+        self._Check(must, config_list, message, code = True)
 
     def Build(self) :
         config_h_path = self._path_to_config_h
@@ -39,18 +42,32 @@ class ConfigBuilder :
             print 'success'
             return self._success_list
 
-    def _Check(self, must, config_list, message, lib) :
+    def _Check(self, must, config_list, message, **cond) :
+        lib = cond.has_key('lib')
+        code = cond.has_key('code')
+        header_list = []
+        struct = ''
         success = False
         if not os.path.isfile(self._path_to_config_h) :
             for target in config_list :
+                if code :
+                    header_list = target['header']
+                    struct = target['struct']
+                    target = target['name']
                 print 'checking for ' + target + '...',
                 head = ''
-                if not lib :
+                if not lib and not code :
                     head = '#include <' + target + '>\n'
+                elif code :
+                    for header in header_list :
+                        head += '#include <' + header + '>\n'
+                    head += 'typedef ' + struct + ' test_check;\n'
+
                 head += '''int main() {
                          return 0;
                        }\n'''
                 value = re.sub(_sub, '_', target).upper()
+                value = value.replace('::', '_')
                 filename = _dirname + '/' + value.lower() + '.cc'
                 test_file = open(filename, 'w+')
                 test_file.write(head)
