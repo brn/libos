@@ -20,22 +20,28 @@ class t {
     return false;
   }
 };
+typedef bool (callback)(os::fs::DirEntry*);
+void test_func( callback fn){
+  printf("ok\n");
+}
 
 int main (int argc, char** args) {
 #ifdef PLATFORM_WIN32
   ::_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
   printf("%s\n", os::fs::Path::current_directory());
-  /*
-  
-  const char* target = (argc > 1)? args[1] : "../";
-  os::fs::directory_iterator it(target, true);
-  for (; it != os::fs::directory_iterator::end(); ++it) {
+  /*const char* target = (argc > 1)? args[1] : "../";
+  os::fs::DirectoryIterator it(target, true);
+  for (; it != os::fs::DirectoryIterator::end(); ++it) {
      os::Printf("%s\n", it->abspath());
-  }*/
-  os::fs::File file("os.gyp", "r");
-  std::cout << file << std::endl;
-  os::Printf("%s\n", os::fs::Read("test/test.cc").c_str());
+     }*/
+  os::fs::MakeDirectory(args[1], 0777);
+  //os::fs::File file("os.gyp", "r");
+  //std::cout << file << std::endl;
+  //os::Printf("%s\n", os::fs::Read("test/test.cc").c_str());
+  /*os::fs::CopyTree("test", "test2");
+  printf("%s\n", os::fs::Path::current_directory());
+  os::fs::Remove("test2");*/
   /*
   int i;
 

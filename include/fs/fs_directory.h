@@ -41,27 +41,27 @@ class DirEntry {
   char* full_path_;
 };
 
-class directory_iterator : public std::iterator<std::forward_iterator_tag, const DirEntry*> {
+class DirectoryIterator : public std::iterator<std::forward_iterator_tag, const DirEntry*> {
  public :
-  directory_iterator(const char* path, bool recursive = false);
-  directory_iterator(const std::string& path, bool recursive = false);
-  directory_iterator(const Path& path_info, bool recursive = false);
+  DirectoryIterator(const char* path, bool recursive = false);
+  DirectoryIterator(const std::string& path, bool recursive = false);
+  DirectoryIterator(const Path& path_info, bool recursive = false);
   template <typename FilterT>
-  directory_iterator(const char* path, FilterT f, bool recursive = false)
+  DirectoryIterator(const char* path, FilterT f, bool recursive = false)
       : recursive_(recursive),
         dir_data_(NULL),
         current_entry_(NULL),
         filter_base_(new Filter<FilterT>(f)) {Initialize(path);}
   
-  directory_iterator();
-  directory_iterator(const directory_iterator&);
-  ~directory_iterator();
-  const directory_iterator& operator = (const directory_iterator&);
+  DirectoryIterator();
+  DirectoryIterator(const DirectoryIterator&);
+  ~DirectoryIterator();
+  const DirectoryIterator& operator = (const DirectoryIterator&);
   const DirEntry* operator*() const;
   const DirEntry* operator->() const;
-  directory_iterator& operator ++();
-  bool operator !=(const directory_iterator&) const;
-  static const directory_iterator& end();
+  DirectoryIterator& operator ++();
+  bool operator !=(const DirectoryIterator&) const;
+  static const DirectoryIterator& end();
  private :
   class FilterBase {
    public :

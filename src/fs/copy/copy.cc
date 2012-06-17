@@ -7,7 +7,7 @@ bool Copy(const char* src, const char* dest) {
   Stat stat(src);
   if (stat.IsExist() && !stat.IsDir()) {
     File src_file(src, "rb");
-    File dest_file(src, "w+b");
+    File dest_file(dest, "w+b");
     if (src_file.IsValid() && dest_file.IsValid()) {
       dest_file.Write(src_file.Read());
       return true;
@@ -29,12 +29,12 @@ bool CopyTree(const char* src, const char* dest) {
       return Copy(src, dest);
     }
     Path src_info(src);
-    Path dest_info(src);
+    Path dest_info(dest);
     if (!MakeDirectory(dest_info.absolute_path(), 0777)) {
       return false;
     }
-    directory_iterator it(src_info.absolute_path());
-    for (; it != directory_iterator::end(); ++it) {
+    DirectoryIterator it(src_info.absolute_path());
+    for (; it != DirectoryIterator::end(); ++it) {
       const char* path = it->abspath();
       if (it->IsDir()) {
         std::string buf;

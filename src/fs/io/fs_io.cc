@@ -3,7 +3,9 @@
 #include <string>
 #include <sstream>
 #include <utilities.h>
+#include <defines.h>
 #include <fs/fs_io.h>
+#include <fs/fs_stat.h>
 namespace os { namespace fs {
 
 File::File(const char* path, const char* mode) {
@@ -18,9 +20,17 @@ File::~File() {
   }
 }
 
-void InternalReadAll(std::string* string, FILE* fp) {
+void InternalReadAll(std::string* string, FILE* fp, const char* path) {
   fseek(fp, 0, SEEK_END);
   int size = ftell(fp);
+  if (size == 0) {
+    Stat stat(path);
+    size = stat.Size();
+    if (size == 0) {
+      string->append("");
+      return;
+    }
+  }
   rewind(fp);
   char* read_buf = new char[size];
   string->reserve(size);
@@ -40,6 +50,8 @@ void InternalReadByte(std::stringstream* st, FILE* fp, int size) {
   while ((ch = fgetc(fp)) != NULL) {
     if (size > count) {
       (*st) << ch;
+    } else {
+      break;
     }
     count++;
   }
@@ -47,14 +59,14 @@ void InternalReadByte(std::stringstream* st, FILE* fp, int size) {
 
 void File::Read(std::string* buffer) {
   if (fp_ != NULL) {
-    InternalReadAll(buffer, fp_);
+    InternalReadAll(buffer, fp_, path_);
   }
 }
 
 std::string File::Read() {
   if (fp_ != NULL) {
     std::string string;
-    InternalReadAll(&string, fp_);
+    InternalReadAll(&string, fp_, path_);
     return string;
   }
   return std::string("");
@@ -148,7 +160,7 @@ std::string Read(const char* path) {
   FILE *fp = os::FOpen(path, "rb");
   if (fp != NULL) {
     std::string string;
-    InternalReadAll(&string, fp);
+    InternalReadAll(&string, fp, path);
     return string;
   }
   return std::string("");
