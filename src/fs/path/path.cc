@@ -242,7 +242,7 @@ const char* Path::current_directory() {
     if (!isSuccess) {
       fprintf(stderr, "GetCwd fail.");
     }
-    ConvertBackSlash(tmp, current_dir_);
+    current_dir_ = ConvertBackSlash(tmp, current_dir_);
 #elif defined PLATFORM_POSIX
     char tmp[GW_BUF_SIZE];
     char* dir = getcwd(tmp, sizeof (tmp));

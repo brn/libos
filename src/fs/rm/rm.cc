@@ -20,22 +20,30 @@
  *DEALINGS IN THE SOFTWARE.
  */
 #include <stdio.h>
+#include <defines.h>
+#ifdef PLATFORM_POSIX
+#include <unistd.h>
+#define RMDIR(path) ::rmdir(path)
+#elif defined(PLATFORM_WIN32)
+#include <direct.h>
+#define RMDIR(path) ::_rmdir(path)
+#endif
 #include <fs.h>
 namespace os { namespace fs {
 
 bool RemoveDirOnly(const char* path) {
-  directory_iterator dirs(path, true);
-  directory_iterator end;
+  DirectoryIterator dirs(path, true);
+  DirectoryIterator end;
   while (dirs != end) {
     RemoveDirOnly(dirs->abspath());
     ++dirs;
   }
-  return ::remove(path);
+  return RMDIR(path) != -1;
 }
 
 bool RemoveDir(const char* path) {
-  directory_iterator dirs(path, true);
-  directory_iterator end;
+  DirectoryIterator dirs(path, true);
+  DirectoryIterator end;
   while (dirs != end) {
     if (dirs->IsFile()) {
       bool ret = (::remove(dirs->abspath()) != -1);

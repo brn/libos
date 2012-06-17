@@ -17,8 +17,20 @@
 
 namespace os {namespace fs {
 Stat::Stat(const char* path) {
+#ifdef PLATFORM_WIN32
+  int len = strlen(path);
+  if (path[len - 1] == ':') {
+    path_ = reinterpret_cast<char*>(malloc(len + 2));
+    strcpy(path_, path);
+    path_[len] = '/';
+    path_[len + 1] = 0;
+  } else {
+    path_ = Strdup(path);
+  }
+#else
   path_ = Strdup(path);
-  is_exist_ = (STAT_FN(path, &fstat_) != -1);
+#endif
+  is_exist_ = (STAT_FN(path_, &fstat_) != -1);
 }
 
 Stat::~Stat() {free(path_);}

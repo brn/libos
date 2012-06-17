@@ -56,19 +56,19 @@ void Chmod(const std::string& path, int permiss) {
   Chmod(path.c_str(), permiss);
 }
 
-directory_iterator::directory_iterator(const char* path, bool recursive)
+DirectoryIterator::DirectoryIterator(const char* path, bool recursive)
     : recursive_(recursive),
       dir_data_(NULL),
       current_entry_(NULL),
       filter_base_(NULL){Initialize(path);}
 
-directory_iterator::directory_iterator(const std::string& path, bool recursive)
+DirectoryIterator::DirectoryIterator(const std::string& path, bool recursive)
     : recursive_(recursive),
       dir_data_(NULL),
       current_entry_(NULL),
       filter_base_(NULL){Initialize(path.c_str());}
 
-directory_iterator::directory_iterator(const Path& path_info, bool recursive)
+DirectoryIterator::DirectoryIterator(const Path& path_info, bool recursive)
     : recursive_(recursive),
       dir_data_(NULL),
       current_entry_(NULL),
@@ -78,22 +78,26 @@ directory_iterator::directory_iterator(const Path& path_info, bool recursive)
   }
 }
 
-directory_iterator::directory_iterator()
+DirectoryIterator::DirectoryIterator()
     : recursive_(false),
       dir_data_(NULL),
       current_entry_(NULL),
       filter_base_(NULL){}
 
-directory_iterator::directory_iterator(const directory_iterator& iterator)
-    : recursive_(iterator.recursive_),
-      dir_data_(iterator.dir_data_) {
+DirectoryIterator::DirectoryIterator(const DirectoryIterator& iterator)
+    : recursive_(iterator.recursive_) {
+  if (dir_data_ != NULL) {
+    delete dir_data_;
+  }
+  dir_data_ = iterator.dir_data_;
   if (current_entry_ != NULL) {
     delete current_entry_;
   }
   current_entry_ = iterator.current_entry_;
+  sub_ = iterator.sub_;
 }
 
-directory_iterator::~directory_iterator() {
+DirectoryIterator::~DirectoryIterator() {
   if (dir_data_ != NULL) {
     Dir::Close(dir_data_);
     delete dir_data_;
@@ -106,7 +110,7 @@ directory_iterator::~directory_iterator() {
   }
 }
 
-void directory_iterator::Initialize(const char* path) {
+void DirectoryIterator::Initialize(const char* path) {
   if (dir_data_ == NULL) {
     dir_data_ = new DirData;
   } else {
@@ -115,7 +119,7 @@ void directory_iterator::Initialize(const char* path) {
   ReadDirectory(Dir::Open(path, dir_data_));
 }
 
-const directory_iterator& directory_iterator::operator = (const directory_iterator& iterator) {
+const DirectoryIterator& DirectoryIterator::operator = (const DirectoryIterator& iterator) {
   recursive_ = iterator.recursive_;
   sub_ = iterator.sub_;
   dir_data_ = iterator.dir_data_;
@@ -126,26 +130,26 @@ const directory_iterator& directory_iterator::operator = (const directory_iterat
   return (*this);
 }
 
-const DirEntry* directory_iterator::operator*() const {
+const DirEntry* DirectoryIterator::operator*() const {
   return current_entry_;
 }
 
-const DirEntry* directory_iterator::operator->() const {
+const DirEntry* DirectoryIterator::operator->() const {
   return current_entry_;
 }
 
-directory_iterator& directory_iterator::operator++() {
+DirectoryIterator& DirectoryIterator::operator++() {
   if (dir_data_) {
     ReadDirectory(Dir::NextEntry(dir_data_));
   }
   return (*this);
 }
 
-bool directory_iterator::operator != (const directory_iterator& iter) const {
+bool DirectoryIterator::operator != (const DirectoryIterator& iter) const {
   return current_entry_ != iter.current_entry_;
 }
 
-void directory_iterator::CreateDirEnt() {
+void DirectoryIterator::CreateDirEnt() {
   if (dir_data_ != NULL) {
     current_entry_ = (current_entry_ != NULL)?
         Dir::CreateNextEntry(dir_data_, current_entry_) : Dir::CreateFirstEntry(dir_data_);
@@ -153,7 +157,7 @@ void directory_iterator::CreateDirEnt() {
 }
 
 
-void directory_iterator::ReadDirectory(bool success) {
+void DirectoryIterator::ReadDirectory(bool success) {
   if (!success) {
     if (current_entry_ != NULL) {
       delete current_entry_;
@@ -178,6 +182,6 @@ void directory_iterator::ReadDirectory(bool success) {
     dir_data_ = NULL;
   }
 }
-static directory_iterator it;
-const directory_iterator& directory_iterator::end() {return it;}
+static DirectoryIterator it;
+const DirectoryIterator& DirectoryIterator::end() {return it;}
 }}

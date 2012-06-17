@@ -34,7 +34,7 @@ bool MakeDirectory(const char* path, int permiss) {
     for (int i = 0,count = 0; i < len; ++i) {
       if (processed_path[ i ] == '/') {
         if (i == 0) {
-          chdir("/");
+          ChangeDirectory("/");
         } else {
           if (tmp[ count - 1 ] == ':') {
             tmp[ count ] = '/';
