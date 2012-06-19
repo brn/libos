@@ -51,7 +51,7 @@ bool FSWatcher::AddWatch(const char* path) {
   if (stat.IsExist() && stat.IsReg()) {
     int state = GetState();
     Exit();
-    ScopedLock lock(mutex_);
+    lock_guard lock(mutex_);
     FSEventMap::iterator find = map_.find(path);
     if (find == map_.end()) {
       int fd = ::open(abpath, O_EVTONLY);
@@ -81,7 +81,7 @@ bool FSWatcher::RemoveWatch(const char* path) {
     if (find != map_.end()) {
       int state = GetState();
       Exit();
-      ScopedLock lock(mutex_);
+      lock_guard lock(mutex_);
       ::close(find->second->fd());
       map_.erase(abpath);
       if (state == kSync) {
@@ -97,7 +97,7 @@ bool FSWatcher::RemoveWatch(const char* path) {
 
 void FSWatcher::RemoveWatch() {
   Exit();
-  ScopedLock lock(mutex_);
+  lock_guard lock(mutex_);
   FSEventMap::iterator it = map_.begin();
   for (; it != map_.end(); ++it) {
     ::close(it->second->fd());
@@ -116,17 +116,14 @@ void FSWatcher::Exit() {
   flags_.Set(kExit);
   flags_.UnSet(kSync);
   flags_.UnSet(kAsync);
-  ScopedLock lock(mutex_);
+  lock_guard lock(mutex_);
 }
 
 bool FSWatcher::Run() {
   if (flags_.At(kExit)) {
     flags_.Set(kSync);
-    Thread thread;
-    if (!thread.Create(ThreadRunner, this)) {
-      return false;
-    }
-    thread.Join();
+    thread th(ThreadRunner, this);
+    th.join();
     return true;
   } else {
     return false;
@@ -140,18 +137,15 @@ bool FSWatcher::IsRunning() const {
 bool FSWatcher::RunAsync() {
   if (flags_.At(kExit)) {
     flags_.Set(kAsync);
-    Thread thread;
-    if (!thread.Create(ThreadRunner, this)) {
-      return false;
-    }
-    thread.Detach();
+    thread th(ThreadRunner, this);
+    th.Detach();
     return true;
   }
   return false;
 }
 
 void FSWatcher::Start() {
-  ScopedLock lock(mutex_);
+  lock_guard lock(mutex_);
   flags_.UnSet(kExit);
   std::vector<struct kevent> events;
   events.reserve(map_.size());

@@ -21,11 +21,124 @@ def run_gyp(args):
   builder.CheckHeader(True, ["unordered_map", "tr1/unordered_map", "boost/unordered_map.hpp"], 'unordered_map required.')
   if not builder.CheckHeader(False, ['thread', 'tr1/thread'], '') :
     builder.CheckLibAndHeader(True, [
-        {
-          'header' : ['boost/thread.hpp'],
-          'lib' : ['boost_thread-vc100-mt-1_47.lib', 'boost_thread-vc100-mt-gd-1_47.lib', 'libboost_thread-mt.a']
-        }
+    {
+      'header' : ['boost/thread.hpp'],
+      'lib' : ['boost_thread-vc100-mt-1_47.lib', 'boost_thread-vc100-mt-gd-1_47.lib', 'libboost_thread-mt.a']
+    }
     ], 'boost/thread is required.')
+  
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::promiss',
+        'header' : ['thread', 'future'],
+        'struct': 'std::promise<int>'
+        },
+      {
+        'name' : 'boost::promiss',
+        'header' : ['boost/thread.hpp'],
+        'struct': 'boost::promise<int>'
+        }      
+      ], 'promise required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::future',
+        'header' : ['thread.hpp', 'future'],
+        'struct': 'std::future<int>'
+        },
+      {
+        'name' : 'boost::unique_future',
+        'header' : ['boost/thread.hpp'],
+        'struct': 'boost::unique_future<int>'
+        }
+      ], 'future required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::packaged_task',
+        'header' : ['thread.hpp', 'future'],
+        'struct': 'std::packaged_task<int>'
+        },
+      {
+        'name' : 'boost::packaged_task',
+        'header' : ['boost/thread.hpp'],
+        'struct': 'boost::packaged_task<int>'
+        }
+      ], 'packaged_task required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::mutex',
+        'header' : ['thread.hpp', 'mutex'],
+        'struct': 'std::mutex'
+        },
+      {
+        'name' : 'boost::mutex',
+        'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
+        'struct': 'boost::mutex'
+        }
+      ], 'mutex required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::recursive_mutex',
+        'header' : ['thread.hpp', 'mutex'],
+        'struct': 'std::recursive_mutex'
+        },
+      {
+        'name' : 'boost::recursive_mutex',
+        'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
+        'struct': 'boost::recursive_mutex'
+        }
+      ], 'recursive_mutex required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::timed_mutex',
+        'header' : ['thread.hpp', 'mutex'],
+        'struct': 'std::timed_mutex'
+        },
+      {
+        'name' : 'boost::timed_mutex',
+        'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
+        'struct': 'boost::timed_mutex'
+        }
+      ], 'timed_mutex required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::unique_lock',
+        'header' : ['thread.hpp', 'mutex.hpp'],
+        'struct': 'std::unique_lock<std::mutex>'
+        },
+      {
+        'name' : 'boost::unique_lock',
+        'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
+        'struct': 'boost::unique_lock<boost::mutex>'
+        }
+      ], 'unique_lock required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::lock_guard',
+        'header' : ['thread.hpp', 'mutex.hpp'],
+        'struct': 'std::lock_guard<std::mutex>'
+        },
+      {
+        'name' : 'boost::lock_guard',
+        'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
+        'struct': 'boost::lock_guard<boost::mutex>'
+        }
+      ], 'lock_guard required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'boost::condition',
+        'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
+        'struct': 'boost::condition'
+        }
+      ], 'condition required.')
+
   builder.CheckHeader(True, ['tuple', 'tr1/tuple', 'boost/tuple'], 'tuple required.')
   builder.CheckHeader(False, ['atomic', 'tr1/atomic'], 'atomic required.')
   builder.CheckStruct(True, [
@@ -40,6 +153,35 @@ def run_gyp(args):
         'struct' : 'boost::function<int (int)>'
       }
     ], 'function required.')
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::shared_ptr',
+        'header' : ['memory'],
+        'struct': 'std::shared_ptr<const char>'
+      },
+      {
+        'name' : 'tr1::shared_ptr',
+        'header' : ['memory'],
+        'struct': 'std::tr1::shared_ptr<const char>'
+      },
+      {
+        'name' : 'boost::shared_ptr',
+        'header' : ["boost/shared_ptr.hpp"],
+        'struct' : 'boost::shared_ptr<const char>'
+      }
+    ], 'shared_ptr required.')
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::allocate_shared',
+        'header' : ['memory'],
+        'function': 'std::allocate_shared<char>(std::allocator<char>())'
+      },
+      {
+        'name' : 'boost::allocate_shared',
+        'header' : ["memory", "boost/shared_ptr.hpp", "boost/make_shared.hpp"],
+        'function' : 'boost::allocate_shared<char>(std::allocator<char>())'
+      }
+    ], 'allocate_shared required.')
   builder.Build()
   rc = gyp.main(args)
   if rc != 0:

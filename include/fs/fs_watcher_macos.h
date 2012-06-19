@@ -1,6 +1,7 @@
 #ifndef FS_EVENT_MACOS_FS_WATCHER_H_ 
 #define FS_EVENT_MACOS_FS_WATCHER_H_ 
 #include "utilities.h"
+#include "thread.h"
 #include "smart_pointer/scoped_ptr.h"
 #include "smart_pointer/shared_ptr.h"
 #include "notificator/notificator.h"
@@ -33,7 +34,7 @@ class FSWatcher : public Notificator<FSEvent*>{
   static void* ThreadRunner(void* param);
   BitVector8 flags_;
   int kq_;
-  Mutex mutex_;
+  mutex mutex_;
   FSEventMap map_;
 };
 

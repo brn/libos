@@ -1,10 +1,73 @@
 #ifndef INCLUDE_THREAD_H_
 #define INCLUDE_THREAD_H_
-#include "defines.h"
-#ifdef PLATFORM_POSIX
-#include "thread-posix.h"
-#elif defined PLATFORM_WIN32
-#include "thread-win32.h"
+#include "libos_config.h"
+#if defined(HAVE_THREAD)
+#include <thread>
+namespace os {
+using std::thread::thread;
+}
+#elif defined(HAVE_BOOST_THREAD_HPP)
+#include <boost/thread.hpp>
+namespace os {
+using boost::thread;
+}
+#elif defined(HAVE_TR1_THREAD)
+#include <tr1/thread>
+namespace os {
+using std::tr1::thread;
+}
 #endif
 
+#if defined(HAVE_STD_MUTEX)
+#include <mutex>
+namespace os {
+using std::mutex;
+}
+#elif defined(HAVE_BOOST_MUTEX)
+namespace os {
+using boost::mutex;
+}
+#endif
+
+#if defined(HAVE_STD_UNIQUE_LOCK)
+namespace os {
+using std::unique_lock;
+}
+#elif defined(HAVE_BOOST_UNIQUE_LOCK)
+namespace os {
+using boost::unique_lock;
+}
+#endif
+
+#if defined(HAVE_STD_LOCK_GUARD)
+namespace os {
+using std::lock_guard;
+}
+#elif defined(HAVE_BOOST_LOCK_GUARD)
+namespace os {
+using boost::lock_guard;
+}
+#endif
+
+#if defined(HAVE_STD_RECURSIVE_MUTEX)
+namespace os {
+using std::recursive_mutex;
+}
+#elif defined(HAVE_BOOST_RECURSIVE_MUTEX)
+namespace os {
+using boost::recursive_mutex;
+}
+#endif
+
+#if defined(HAVE_STD_TIMED_MUTEX)
+namespace os {
+using std::timed_mutex;
+}
+#elif defined(HAVE_BOOST_TIMED_MUTEX)
+namespace os {
+using boost::timed_mutex;
+}
+#endif
+
+}
 #endif

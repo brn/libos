@@ -11,6 +11,7 @@ class ConfigBuilder :
 
     def __init__(self, path_to_config_h) :
         self._success_list = {}
+        self._failed_list = {}
         self._path_to_config_h = path_to_config_h
         if not os.path.isdir(_dirname):
             os.makedirs(_dirname)
@@ -38,6 +39,8 @@ class ConfigBuilder :
             config_h = open(config_h_path, 'w+')
             for ma in self._success_list :
                 config_h.write('#define ' + ma + '\n\n')
+            for ma in self._failed_list :
+                config_h.write('//#undef ' + ma + '\n\n')
             config_h.close()
             print 'success'
             return self._success_list
@@ -46,13 +49,19 @@ class ConfigBuilder :
         lib = cond.has_key('lib')
         code = cond.has_key('code')
         header_list = []
-        struct = ''
         success = False
         if not os.path.isfile(self._path_to_config_h) :
             for target in config_list :
+                struct = ''
+                fn = ''
+                is_fn = False
                 if code :
                     header_list = target['header']
-                    struct = target['struct']
+                    if target.has_key('struct') :
+                        struct = target['struct']
+                    elif target.has_key('function') :
+                        fn = target['function']
+                        is_fn = True
                     target = target['name']
                 print 'checking for ' + target + '...',
                 head = ''
@@ -61,9 +70,18 @@ class ConfigBuilder :
                 elif code :
                     for header in header_list :
                         head += '#include <' + header + '>\n'
-                    head += 'typedef ' + struct + ' test_check;\n'
+                    if not is_fn :
+                        head += 'typedef ' + struct + ' test_check;\n'
+                    else :
+                        head += '#include <stdio.h>\n'
+                        head += '''template<typename T>\nvoid test_holder(T v) {printf("ok!\\n");};
+                                '''
+                        head += '''int main() {
+                                     test_holder(''' + fn + ''');\n
+                                   }\n'''
 
-                head += '''int main() {
+                if not is_fn :
+                    head += '''int main() {
                          return 0;
                        }\n'''
                 value = re.sub(_sub, '_', target).upper()
@@ -81,6 +99,7 @@ class ConfigBuilder :
                     success = True
                     break
                 else :
+                    self._failed_list['HAVE_' + value] = 1
                     success = False
                     print ' no'
             if must and not success :
