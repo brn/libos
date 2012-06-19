@@ -13,15 +13,10 @@
 #include <thread.h>
 #include <utilities.h>
 namespace os {namespace fs {
-class MutexHolder : private Static {
- public :
-  static os::Mutex mutex;
-};
-
-os::Mutex MutexHolder::mutex;
+os::mutex mutex_;
 
 bool MakeDirectory(const char* path, int permiss) {
-  os::ScopedLock lock(MutexHolder::mutex);
+  os::lock_guard<os::mutex> lock(mutex_);
   int len = strlen(path);
   if (len > 0) {
     std::string processed_path = path;

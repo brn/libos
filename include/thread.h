@@ -69,5 +69,10 @@ using boost::timed_mutex;
 }
 #endif
 
+#if defined(HAVE_BOOST_THREAD_SPECIFIC_PTR) && defined(HAVE_BOOST_THREAD_TSS_HPP)
+#include <boost/thread/tss.hpp>
+namespace os {
+using boost::thread_specific_ptr;
 }
+#endif
 #endif

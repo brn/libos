@@ -58,7 +58,7 @@
 #endif
 
 namespace os {namespace fs {
-static os::Mutex mutex_;
+static os::mutex mutex_;
 char* GetDirectoryFromPath(const char* path, char* buffer) {
   int index = strlen(path);
   bool is_slashed = false;
@@ -228,7 +228,7 @@ Path::~Path() {
 }
 
 const char* Path::current_directory() {
-  os::ScopedLock lock(mutex_);
+  os::lock_guard<os::mutex> lock(mutex_);
   if (current_dir_ != NULL) {
     free(current_dir_);
   } else {
@@ -256,7 +256,7 @@ const char* Path::current_directory() {
 
 
 const char* Path::home_directory() {
-  os::ScopedLock lock(mutex_);
+  os::lock_guard<os::mutex> lock(mutex_);
   if (user_home_ != NULL) {
     free(user_home_);
   } else {

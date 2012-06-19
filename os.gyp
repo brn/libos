@@ -84,7 +84,6 @@
         [ 'OS=="win"', {
           'sources': [
             'src/utils/utils-win32.cc',
-            'src/thread/thread-win32.cc',
             'src/fs/event/win32/fs_watcher_win32.cc',
             'src/fs/directory/directory_defines-win32.h',
             'src/fs/directory/directory_defines-win32.cc'
@@ -103,7 +102,6 @@
           ],
           'sources': [
             'src/utils/utils-posix.cc',
-            'src/thread/thread-posix.cc',
             'src/fs/directory/directory_defines-posix.h',
             'src/fs/directory/directory_defines-posix.cc'
           ]
@@ -130,13 +128,15 @@
       'type': 'executable',
       'dependencies': [ 'os' ],
       'sources': [
-        'test/test.cc'
-      ],
+        'test/test.cc',
+      ],      
       'conditions' : [
         ['OS=="win"', {
           'include_dirs' : [
             '<(additional_include)'
           ]
+        },{
+          'libraries' : ['<(boost_thread_lib_name)']
         }]
       ],
       'msvs-settings': {

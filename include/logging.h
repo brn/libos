@@ -49,7 +49,7 @@ class Logging {
   static const char kFatal[];
   static const char kWarn[];
   static bool initialized_;
-  static Mutex mutex_;
+  static mutex mutex_;
   static ScopedPtr<Logging> logging_;
 };
 }

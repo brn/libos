@@ -5,7 +5,7 @@
     'host_arch%': 'ia32',            # set v8's host architecture
     'library%': 'static_library',    # allow override to 'shared_library' for DLL/.so builds
     'component%': 'static_library',  # NB. these names match with what V8 expects
-    'msvs_multi_core_compile': '0',  # we do enable multicore compiles, but not using the V8 way
+    'msvs_multi_core_compile': '1',  # we do enable multicore compiles, but not using the V8 way
   },
 
   'target_defaults': {
@@ -13,16 +13,9 @@
     'configurations': {
       'Debug': {
         'defines': [ 'DEBUG', '_DEBUG' ],
-        'cflags': [ '-g', '-O0' ],
         'msvs_settings': {
           'VCCLCompilerTool': {
-            'target_conditions': [
-              ['library=="static_library"', {
-                'RuntimeLibrary': 1, # static debug
-              }, {
-                'RuntimeLibrary': 3, # DLL debug
-              }],
-            ],
+            'RuntimeLibrary': 3, # DLL debug
             'Optimization': 0, # /Od, no optimization
             'MinimalRebuild': 'true',
             'OmitFramePointers': 'false',
@@ -30,6 +23,7 @@
           },
           'VCLinkerTool': {
             'LinkIncremental': 2, # enable incremental linking
+            'AdditionalLibraryDirectories' : '$(LIB)'
           },
         }
       },

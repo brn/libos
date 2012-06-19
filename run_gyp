@@ -15,24 +15,28 @@ import config_builder
 # to be written.
 output_dir = os.path.join(os.path.abspath(root), 'out')
 
-def run_gyp(args):
-  builder = config_builder.ConfigBuilder('include/libos_config.h')
-  builder.CheckHeader(False, ['stdint.h'], '')
-  builder.CheckHeader(True, ["unordered_map", "tr1/unordered_map", "boost/unordered_map.hpp"], 'unordered_map required.')
-  if not builder.CheckHeader(False, ['thread', 'tr1/thread'], '') :
-    builder.CheckLibAndHeader(True, [
+def CheckThreads(builder, args) :
+  std_thread = builder.CheckHeader(False, ['thread', 'tr1/thread'], '')
+  stds = {};
+  boosts = {};
+  if not std_thread[0] :
+    result = builder.CheckLibAndHeader(True, [
     {
       'header' : ['boost/thread.hpp'],
       'lib' : ['boost_thread-vc100-mt-1_47.lib', 'boost_thread-vc100-mt-gd-1_47.lib', 'libboost_thread-mt.a']
     }
     ], 'boost/thread is required.')
-  
-  builder.CheckStruct(True, [
+    args.append('-Dboost_thread_lib_name=' + result[1])
+    
+  stds['promise'] = builder.CheckStruct(False, [
       {
         'name' : 'std::promiss',
         'header' : ['thread', 'future'],
         'struct': 'std::promise<int>'
-        },
+      }
+      ], 'promise required.')
+
+  boosts['promise'] = builder.CheckStruct(False, [
       {
         'name' : 'boost::promiss',
         'header' : ['boost/thread.hpp'],
@@ -40,12 +44,16 @@ def run_gyp(args):
         }      
       ], 'promise required.')
 
-  builder.CheckStruct(True, [
+
+  stds['future'] = builder.CheckStruct(False, [
       {
         'name' : 'std::future',
         'header' : ['thread.hpp', 'future'],
         'struct': 'std::future<int>'
-        },
+      }
+      ], 'future required.')
+
+  boosts['future'] = builder.CheckStruct(False, [
       {
         'name' : 'boost::unique_future',
         'header' : ['boost/thread.hpp'],
@@ -53,25 +61,31 @@ def run_gyp(args):
         }
       ], 'future required.')
 
-  builder.CheckStruct(True, [
+  stds['packaged_task'] = builder.CheckStruct(False, [
       {
         'name' : 'std::packaged_task',
         'header' : ['thread.hpp', 'future'],
         'struct': 'std::packaged_task<int>'
-        },
+      }
+      ], 'packaged_task required.')
+
+  boosts['packaged_task'] = builder.CheckStruct(False, [
       {
         'name' : 'boost::packaged_task',
         'header' : ['boost/thread.hpp'],
         'struct': 'boost::packaged_task<int>'
-        }
+      }
       ], 'packaged_task required.')
 
-  builder.CheckStruct(True, [
+  stds['mutex'] = builder.CheckStruct(False, [
       {
         'name' : 'std::mutex',
         'header' : ['thread.hpp', 'mutex'],
         'struct': 'std::mutex'
-        },
+      }
+      ], 'mutex required.')
+
+  boosts['mutex'] = builder.CheckStruct(False, [
       {
         'name' : 'boost::mutex',
         'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
@@ -79,12 +93,15 @@ def run_gyp(args):
         }
       ], 'mutex required.')
 
-  builder.CheckStruct(True, [
+  stds['recursive_mutex'] = builder.CheckStruct(False, [
       {
         'name' : 'std::recursive_mutex',
         'header' : ['thread.hpp', 'mutex'],
         'struct': 'std::recursive_mutex'
-        },
+      }
+      ], 'recursive_mutex required.')
+
+  boosts['recursive_mutex'] = builder.CheckStruct(False, [
       {
         'name' : 'boost::recursive_mutex',
         'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
@@ -92,12 +109,15 @@ def run_gyp(args):
         }
       ], 'recursive_mutex required.')
 
-  builder.CheckStruct(True, [
+  stds['timed_mutex'] = builder.CheckStruct(False, [
       {
         'name' : 'std::timed_mutex',
         'header' : ['thread.hpp', 'mutex'],
         'struct': 'std::timed_mutex'
-        },
+      }
+      ], 'timed_mutex required.')
+
+  boosts['timed_mutex'] = builder.CheckStruct(False, [
       {
         'name' : 'boost::timed_mutex',
         'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
@@ -105,12 +125,15 @@ def run_gyp(args):
         }
       ], 'timed_mutex required.')
 
-  builder.CheckStruct(True, [
+  stds['unique_lock'] = builder.CheckStruct(False, [
       {
         'name' : 'std::unique_lock',
         'header' : ['thread.hpp', 'mutex.hpp'],
         'struct': 'std::unique_lock<std::mutex>'
-        },
+      }
+      ], 'unique_lock required.')
+
+  boosts['unique_lock'] = builder.CheckStruct(False, [
       {
         'name' : 'boost::unique_lock',
         'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
@@ -118,12 +141,15 @@ def run_gyp(args):
         }
       ], 'unique_lock required.')
 
-  builder.CheckStruct(True, [
+  stds['lock_guard'] = builder.CheckStruct(False, [
       {
         'name' : 'std::lock_guard',
         'header' : ['thread.hpp', 'mutex.hpp'],
         'struct': 'std::lock_guard<std::mutex>'
-        },
+      }
+      ], 'lock_guard required.')
+
+  boosts['lock_guard'] = builder.CheckStruct(False, [
       {
         'name' : 'boost::lock_guard',
         'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
@@ -131,14 +157,33 @@ def run_gyp(args):
         }
       ], 'lock_guard required.')
 
+  builder.CheckHeader(True, ['boost/thread/tss.hpp'], 'boost/thread/tss.hpp is required.')
+
   builder.CheckStruct(True, [
       {
-        'name' : 'boost::condition',
-        'header' : ['boost/thread.hpp', 'boost/thread/condition.hpp'],
-        'struct': 'boost::condition'
+        'name' : 'boost::thread_specific_ptr',
+        'header' : ['boost/thread/tss.hpp'],
+        'struct' : 'boost::thread_specific_ptr<int>'
         }
-      ], 'condition required.')
+      ], 'boost::thread_specific_ptr is required.')
+  
+  if std_thread[0] :
+    for std in stds :
+      if std[0] == False :
+        print 'std::' + std[1] + ' is required. Change a compiler or install boost library.'
+        sys.exit(1)
 
+  else :
+    for boost in boosts :
+      if boost[0] == False :
+        print 'boost::' + boost[1] + ' is required. You need to install boost library1.49.0 or later.'
+        sys.exit(1)
+
+def BuildConfig(args) :
+  builder = config_builder.ConfigBuilder('include/libos_config.h', always_build=True)
+  builder.CheckHeader(False, ['stdint.h'], '')
+  builder.CheckHeader(True, ["unordered_map", "tr1/unordered_map", "boost/unordered_map.hpp"], 'unordered_map required.')
+  CheckThreads(builder, args)
   builder.CheckHeader(True, ['tuple', 'tr1/tuple', 'boost/tuple'], 'tuple required.')
   builder.CheckHeader(False, ['atomic', 'tr1/atomic'], 'atomic required.')
   builder.CheckStruct(True, [
@@ -183,6 +228,8 @@ def run_gyp(args):
       }
     ], 'allocate_shared required.')
   builder.Build()
+
+def run_gyp(args):
   rc = gyp.main(args)
   if rc != 0:
     print 'Error running GYP'
@@ -207,10 +254,16 @@ if __name__ == '__main__':
   args.append('--depth=' + root)
   
   additional_include = os.getenv("INCLUDE")
+  additional_lib = os.getenv("LIB")
   if  additional_include :
     args.append('-Dadditional_include=' + additional_include)
   else :
     additional_include = ""
+  
+  if additional_lib :
+    args.append('-Dadditional_lib=' + additional_lib)
+  else :
+    additional_lib = ''
 
   # There's a bug with windows which doesn't allow this feature.
   if sys.platform != 'win32':
@@ -223,7 +276,8 @@ if __name__ == '__main__':
 
   args.append('-Dtarget_arch=ia32')
   args.append('-Dcomponent=static_library')
-  args.append('-Dlibrary=static_library')
+  args.append('-Dlibrary=static_library')  
+  BuildConfig(args)
   gyp_args = list(args)
   print gyp_args
   run_gyp(gyp_args)

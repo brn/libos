@@ -53,13 +53,13 @@ void Pool::Free() {
   }
 }
 
-static os::ThreadLocalStorageKey key_;
+static os::thread_specific_ptr<Pool> ptr_;
 
 inline Pool* Pool::Local() {
-  Pool* pool = reinterpret_cast<Pool*>(os::ThreadLocalStorage::Get(&key_));
+  Pool* pool = reinterpret_cast<Pool*>(ptr_.get());
   if (pool == NULL) {
     pool = new Pool;
-    os::ThreadLocalStorage::Set(&key_, pool);
+    ptr_.reset(pool);
   }
   return pool;
 }

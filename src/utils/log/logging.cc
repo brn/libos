@@ -83,7 +83,7 @@ FILE* Rotate(const char* path, const char* mode, FILE* fp) {
 }
 
 void Logging::Initialize(const char* path, const char* mode) {
-  os::ScopedLock lock(mutex_);
+  os::lock_guard<os::mutex> lock(mutex_);
   if (!initialized_) {
     initialized_ = true;
     logging_(new Logging(path, mode));
@@ -91,7 +91,7 @@ void Logging::Initialize(const char* path, const char* mode) {
 }
 
 void Logging::Initialize(FILE* fp) {
-  os::ScopedLock lock(mutex_);
+  os::lock_guard<os::mutex> lock(mutex_);
   if (!initialized_) {
     initialized_ = true;
     logging_(new Logging(fp));
@@ -158,6 +158,6 @@ void Logging::Info(const char* format, ...) {
 }
 
 bool Logging::initialized_ = false;
-os::Mutex Logging::mutex_;
+os::mutex Logging::mutex_;
 ScopedPtr<Logging> Logging::logging_;
 }

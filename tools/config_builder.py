@@ -9,10 +9,11 @@ _cl_options = '/ZI /nologo /W3 /WX- /Od /Oy- /D "DEBUG" /D "NOMINMAX" /D "_MBCS"
 _lib_path = ('/usr/local/lib', '/opt/local/lib', '/usr/lib', '/lib')
 class ConfigBuilder :
 
-    def __init__(self, path_to_config_h) :
+    def __init__(self, path_to_config_h, **opt) :
         self._success_list = {}
         self._failed_list = {}
         self._path_to_config_h = path_to_config_h
+        self._always_build = opt.has_key('always_build')
         if not os.path.isdir(_dirname):
             os.makedirs(_dirname)
 
@@ -34,7 +35,7 @@ class ConfigBuilder :
 
     def Build(self) :
         config_h_path = self._path_to_config_h
-        if not os.path.isfile(config_h_path) :
+        if not os.path.isfile(config_h_path) or self._always_build :
             print 'now making config header...'
             config_h = open(config_h_path, 'w+')
             for ma in self._success_list :
@@ -50,7 +51,8 @@ class ConfigBuilder :
         code = cond.has_key('code')
         header_list = []
         success = False
-        if not os.path.isfile(self._path_to_config_h) :
+        successed_name = ""
+        if not os.path.isfile(self._path_to_config_h) or self._always_build :
             for target in config_list :
                 struct = ''
                 fn = ''
@@ -93,6 +95,7 @@ class ConfigBuilder :
                 if self._RunChecking(filename, value.lower(), target, lib) == 0 :
                     if not self._success_list.has_key('HAVE_' + value) :
                         self._success_list['HAVE_' + value] = 1
+                        successed_name = target;
                         print ' yes'
                     else :
                         break;
@@ -105,7 +108,7 @@ class ConfigBuilder :
             if must and not success :
                 print message
                 sys.exit(1)
-            return success
+            return (success, successed_name)
 
     def _RunChecking(self, name, obj, raw_name, lib) :
         if _id == 'Windows' or id == 'Microsoft':

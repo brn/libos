@@ -1,5 +1,6 @@
 #ifndef FS_EVENT_WIN32_FS_WATCHER_H_
 #define FS_EVENT_WIN32_FS_WATCHER_H_
+#include "../thread.h"
 #include "notificator/notificator.h"
 namespace os { namespace fs {
 struct FSEventContainer;
@@ -40,7 +41,7 @@ class FSWatcher : public Notificator<FSEvent*> {
   memory::Pool pool_;
   DirectoryMap dir_map_;
   FileMap file_map_;
-  Mutex mutex_;
+  mutex mutex_;
 };
 
 }}

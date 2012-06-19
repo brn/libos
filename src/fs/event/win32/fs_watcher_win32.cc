@@ -157,17 +157,15 @@ void FSWatcher::CreateIOCP() {
 void FSWatcher::Run() {
   CreateIOCP();
   run_type_ = kSync;
-  Thread t;
-  t.Create(ThreadRunner, this);
-  t.Join();
+  thread t(ThreadRunner, this);
+  t.join();
 }
 
 void FSWatcher::RunAsync() {
   CreateIOCP();
   run_type_ = kAsync;
-  Thread t;
-  t.Create(ThreadRunner, this);
-  t.Detach();
+  thread t(ThreadRunner, this);
+  t.detach();
 }
 
 void FSWatcher::Exit() {
@@ -175,7 +173,7 @@ void FSWatcher::Exit() {
   run_type_ = 0;
   LPOVERLAPPED ol = new OVERLAPPED;
   PostQueuedCompletionStatus(iocp_handle_, 0, kExit, ol);
-  ScopedLock lock(mutex_);
+  lock_guard<os::mutex> lock(mutex_);
 }
 
 bool FSWatcher::IsRunning() const {return !is_exit_;}
@@ -196,13 +194,12 @@ void FSWatcher::ReadDirectoryChangesW(HandleData* handle_data) {
 }
 
 void FSWatcher::Start() {
-  ScopedLock lock(mutex_);
+  lock_guard<os::mutex> lock(mutex_);
   is_exit_ = false;
   LPOVERLAPPED pol = NULL;
   DWORD number_of_bytes_transferred = 0;
   ULONG completion_key;
   BOOL success;
-  bool unlocked = false;
   while (1) {
     success = GetQueuedCompletionStatus(iocp_handle_,
                                         &number_of_bytes_transferred,
