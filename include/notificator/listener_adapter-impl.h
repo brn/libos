@@ -22,31 +22,8 @@
  *CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *DEALINGS IN THE SOFTWARE.
  */
-
+#include "../type_convertor.h"
 namespace os {
-template <typename T>
-class Dereferrence {
- public :
-  inline static T& Get(T& t) {
-    return t;
-  }
-};
-
-template <typename T>
-class Dereferrence<T*> {
- public :
-  inline static T& Get(T* t) {
-    return *t;
-  }
-};
-
-template <typename T>
-class Dereferrence<T&> {
- public :
-  inline static T& Get(T& t) {
-    return t;
-  }
-};
 
 template <typename Listener, typename Event>
 inline ListenerAdapter<Listener,Event>::ListenerAdapter(Listener listener)
@@ -55,7 +32,7 @@ inline ListenerAdapter<Listener,Event>::ListenerAdapter(Listener listener)
 
 template <typename Listener, typename Event>
 inline void ListenerAdapter<Listener,Event>::Invoke(Event e) {
-  Dereferrence<Listener>::Get(listener_)(e);
+  TypeConvertor<Listener>::ToRef(listener_)(e);
 }
 
 template <typename Listener, typename Event>

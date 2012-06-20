@@ -26,14 +26,12 @@
 #include "../utilities.h"
 #include "../lib/unordered_map.h"
 namespace os {
-
 /**
  * @class
  * The event observer implementation.
  */
 template<typename Event>
 class Notificator {
-
   //The unordered_multimap entry type.
   typedef std::pair<const char*, ListenerAdapterBase<Event>*> ListenerSet;
   typedef unordered_multimap<std::string, ListenerAdapterBase<Event>*> Listeners;
@@ -65,6 +63,8 @@ class Notificator {
    */
   void NotifyAll(Event e);
 
+  void NotifyAllAsync(Event e);
+  
   /**
    * @public
    * @param {const char*} key
@@ -73,13 +73,14 @@ class Notificator {
    */
   void NotifyForKey(const char* key, Event e);
 
+  void NotifyForKeyAsync(const char* key, Event e);
+
   /**
    * @public
    * @returns {int}
    * Return registered listener number.
    */
   int size() const {return listeners_.size();}
-  template <typename Fn, typename Class>
 
  private :
   memory::Pool pool_;

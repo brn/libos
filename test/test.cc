@@ -20,6 +20,7 @@ class t {
     return false;
   }
 };
+
 typedef bool (callback)(os::fs::DirEntry*);
 void test_func( callback fn){
   printf("ok\n");
@@ -39,7 +40,7 @@ int main (int argc, char** args) {
   printf("%s\n", os::fs::Path::current_directory());
   os::Logging::Initialize(stdout);
   os::fs::FSWatcher fsw;
-  fsw.AddWatch("test/test.cc");
+  fsw.AddWatch("./test/test.cc");
   fsw.AddListener(os::fs::FSWatcher::kModify, ev());
   fsw.Run();
   

@@ -10,7 +10,7 @@ typedef SharedPtr<FSEvent> FSEventHandle;
 typedef std::pair<const char*, HandleDataHandle> DirPair;
 typedef std::pair<const char*, bool> FSEventPair;
 typedef std::pair<const char*, FSEventHandle> FilePair;
-typedef roastlib::unordered_map<std::string, FSEventHandle> Files;
+typedef unordered_map<std::string, FSEventHandle> Files;
 #define BUF_SIZE sizeof(FILE_NOTIFY_INFORMATION) * 50
 static const int kSync = 1;
 static const int kAsync = 2;

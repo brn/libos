@@ -22,29 +22,12 @@
  *CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *DEALINGS IN THE SOFTWARE.
  */
+#include "../lib/foreach.h"
+#include "../thread.h"
 #include "../logging.h"
 namespace os {
 
 #define TEMPLATE template<typename Event>
-
-TEMPLATE
-template <typename Fn, typename Class>
-inline Notificator<Event>::MemBind<Fn, Class>::MemBind(Fn fn, Class cls)
-    : cls_(cls),
-      fn_(fn){}
-
-TEMPLATE
-template <typename Fn, typename Class>
-inline Notificator<Event>::MemBind<Fn, Class>::MemBind(const MemBind& membind) {
-  cls_ = membind.cls_;
-  fn_ = membind.fn_;
-}
-
-TEMPLATE
-template <typename Fn, typename Class>
-inline void Notificator<Event>::MemBind<Fn, Class>::operator()(Event e) {
-  (Dereferrence<Class>::Get(cls_).*fn_)(e);
-}
 
 TEMPLATE
 inline Notificator<Event>::Notificator(){}
@@ -63,27 +46,41 @@ inline void Notificator<Event>::AddListener(const char* key, Listener listener) 
 
 TEMPLATE
 inline void Notificator<Event>::RemoveListener(const char* key) {
-  if (listeners_.find(key) != listeners_.end()) {
-    listeners_.erase(key);
+  ListenersIterator it = listeners_.find(key);
+  if (it != listeners_.end()) {
+    listeners_.erase(it);
   }
 }
 
 
 TEMPLATE
 inline void Notificator<Event>::NotifyAll(Event e) {
-  for (ListenersIterator it = listeners_.begin(); it != listeners_.end(); ++it) {
-    (*it).second->Invoke(e);
+  //std::for_each(listeners_.begin(), listeners_.end(), Invocator_<Event>(e));
+  forEach(Listeners it, listeners_) {
+    (*it)->Invoke(e);
   }
+}
+
+TEMPLATE
+inline void Notificator<Event>::NotifyAllAsync(Event e) {
+  thread t(bind(&Notificator<Event>::NotifyAll, this), key, e);
+  t.detach();
 }
 
 TEMPLATE
 inline void Notificator<Event>::NotifyForKey(const char* key, Event e) {
   DEBUG_LOG(Info, "Notificator::NotifyForKey[%s]", key);
-  ListenersRange range = listeners_.equal_range(key);
+  ListenersRange listener_range = listeners_.equal_range(key);
   //Call all liteners that identified by same key.
-  for (ListenersIterator it = range.first; it != range.second; ++it) {
-    (*it).second->Invoke(e);
+  forEach(Listeners::value_type& it, listener_range) {
+    it.second->Invoke(e);
   }
+}
+
+TEMPLATE
+inline void Notificator<Event>::NotifyForKeyAsync(const char* key, Event e) {
+  thread t(bind(&Notificator<Event>::NotifyForKey, this), key, e);
+  t.detach();
 }
 
 

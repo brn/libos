@@ -70,7 +70,10 @@ char* GetDirectoryFromPath(const char* path, char* buffer) {
       is_slashed = true;
     }
   }
-  buffer = (is_slashed)? os::Strdup(&path[index + 1]) : os::Strdup(path);
+  buffer = os::Strdup(path);
+  if (is_slashed) {
+    buffer[index + 1] = 0;
+  }
   return buffer;
 }
 

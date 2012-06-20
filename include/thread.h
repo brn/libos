@@ -75,4 +75,17 @@ namespace os {
 using boost::thread_specific_ptr;
 }
 #endif
+
+namespace os {
+class Workers {
+ public :
+  Workers()
+      : th_(new thread[thread::hardware_concurrency()]){}
+  Workers(int th_count)
+      : th_(new thread[th_count]){}
+  private :
+  thread* th_;
+};
+}
+
 #endif
