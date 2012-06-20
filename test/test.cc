@@ -25,17 +25,30 @@ void test_func( callback fn){
   printf("ok\n");
 }
 
+class ev {
+ public :
+  void operator()(os::fs::FSEvent* e) {
+    os::Printf("%s\n", e->filename());
+  }
+};
+
 int main (int argc, char** args) {
 #ifdef PLATFORM_WIN32
   ::_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
   printf("%s\n", os::fs::Path::current_directory());
+  os::Logging::Initialize(stdout);
+  os::fs::FSWatcher fsw;
+  fsw.AddWatch("test/test.cc");
+  fsw.AddListener(os::fs::FSWatcher::kModify, ev());
+  fsw.Run();
+  
   /*const char* target = (argc > 1)? args[1] : "../";
   os::fs::DirectoryIterator it(target, true);
   for (; it != os::fs::DirectoryIterator::end(); ++it) {
      os::Printf("%s\n", it->abspath());
      }*/
-  os::fs::MakeDirectory(args[1], 0777);
+  //os::fs::MakeDirectory(args[1], 0777);
   //os::fs::File file("os.gyp", "r");
   //std::cout << file << std::endl;
   //os::Printf("%s\n", os::fs::Read("test/test.cc").c_str());

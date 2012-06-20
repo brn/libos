@@ -5,7 +5,8 @@
         'defines': [
           '_LARGEFILE_SOURCE',
           '_FILE_OFFSET_BITS=64',
-          '_GNU_SOURCE'
+          '_GNU_SOURCE',
+          'BOOST_NO_TYPEID'
         ],
         'conditions': [
           ['OS=="solaris"', {
@@ -112,8 +113,13 @@
           ],
           'direct_dependent_settings': {
             'libraries': [
-              '$(SDKROOT)/System/Library/Frameworks/CoreServices.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreServices.framework'
             ],
+          },
+          'xcode_settings': {
+            'OTHER_LDFLAGS': [
+              '/opt/local/lib/<(boost_thread_lib_name)'
+            ]
           }
         }],
         [ 'OS=="linux"', {
@@ -129,14 +135,12 @@
       'dependencies': [ 'os' ],
       'sources': [
         'test/test.cc',
-      ],      
+      ],   
       'conditions' : [
         ['OS=="win"', {
           'include_dirs' : [
             '<(additional_include)'
           ]
-        },{
-          'libraries' : ['<(boost_thread_lib_name)']
         }]
       ],
       'msvs-settings': {

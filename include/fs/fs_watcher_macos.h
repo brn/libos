@@ -1,11 +1,11 @@
 #ifndef FS_EVENT_MACOS_FS_WATCHER_H_ 
 #define FS_EVENT_MACOS_FS_WATCHER_H_ 
-#include "utilities.h"
-#include "thread.h"
-#include "smart_pointer/scoped_ptr.h"
-#include "smart_pointer/shared_ptr.h"
-#include "notificator/notificator.h"
-#include "lib/unordered_map.h"
+#include "../utilities.h"
+#include "../thread.h"
+#include "../smart_pointer/scoped_ptr.h"
+#include "../smart_pointer/shared_ptr.h"
+#include "../notificator/notificator.h"
+#include "../lib/unordered_map.h"
 namespace os {namespace fs {
 class FSEvent;
 class FSEventData;

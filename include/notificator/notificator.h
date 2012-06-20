@@ -36,23 +36,12 @@ class Notificator {
 
   //The unordered_multimap entry type.
   typedef std::pair<const char*, ListenerAdapterBase<Event>*> ListenerSet;
-  typedef roastlib::unordered_multimap<std::string, ListenerAdapterBase<Event>*> Listeners;
+  typedef unordered_multimap<std::string, ListenerAdapterBase<Event>*> Listeners;
   typedef typename Listeners::iterator ListenersIterator;
   //The unordered_multimap equal_range type.
   typedef std::pair<ListenersIterator, ListenersIterator> ListenersRange;
 
  public :
-  
-  template <typename Fn, typename Class>
-  class MemBind {
-   public :
-    MemBind(Fn fn, Class cl);
-    MemBind(const MemBind&);
-    void operator()(Event e);
-   private :
-    Class cls_;
-    Fn fn_;
-  };
 
   Notificator();
   virtual ~Notificator(){};
@@ -92,11 +81,6 @@ class Notificator {
   int size() const {return listeners_.size();}
   template <typename Fn, typename Class>
 
-  //VC bug. The complex template type cannot write the out of
-  //class definition.
-  static MemBind<Fn, Class> Bind(Fn fn, Class cls) {
-    return MemBind<Fn, Class>(fn, cls);
-  }
  private :
   memory::Pool pool_;
   Listeners listeners_;
