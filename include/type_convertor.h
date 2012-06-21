@@ -9,7 +9,6 @@ class TypeConvertor {
   typedef typename add_reference<T>::type RefType;
   typedef typename add_pointer<T>::type PtrType;
   static RefType ToRef(RefType t) {return t;}
-  template <typename T>
   static PtrType ToPointer(PtrType t) {return t; }
 };
 

@@ -24,7 +24,9 @@
 #define UTILS_NOTIFICATOR_H_
 #include "listener_adapter.h"
 #include "../utilities.h"
+#include "../thread.h"
 #include "../lib/unordered_map.h"
+#include "../lib/shared_ptr.h"
 namespace os {
 /**
  * @class
@@ -32,9 +34,11 @@ namespace os {
  */
 template<typename Event>
 class Notificator {
+  typedef ListenerAdapterBase<Event> ListenerBase;
+  typedef shared_ptr<ListenerBase> ListenerHandle;
   //The unordered_multimap entry type.
-  typedef std::pair<const char*, ListenerAdapterBase<Event>*> ListenerSet;
-  typedef unordered_multimap<std::string, ListenerAdapterBase<Event>*> Listeners;
+  typedef std::pair<const char*, ListenerHandle> ListenerSet;
+  typedef unordered_multimap<std::string, ListenerHandle> Listeners;
   typedef typename Listeners::iterator ListenersIterator;
   //The unordered_multimap equal_range type.
   typedef std::pair<ListenersIterator, ListenersIterator> ListenersRange;
@@ -83,7 +87,9 @@ class Notificator {
   int size() const {return listeners_.size();}
 
  private :
-  memory::Pool pool_;
+
+  template <typename T>
+  void NotifyAsync(T t);
   Listeners listeners_;
 };
 }

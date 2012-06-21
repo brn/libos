@@ -23,14 +23,13 @@
 
 #ifndef UTILS_LISTENER_ADAPTER_H_
 #define UTILS_LISTENER_ADAPTER_H_
-#include "../utilities.h"
 namespace os {
 /**
  * @class
  * Base class of the listener function wrapper.
  */
 template <typename Event>
-class ListenerAdapterBase : public memory::Allocated {
+class ListenerAdapterBase {
  public :
   inline virtual ~ListenerAdapterBase(){}
   //Pure virtual function for ListenerAdapter,

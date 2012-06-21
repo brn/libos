@@ -72,7 +72,7 @@ class DirectoryIterator : public std::iterator<std::forward_iterator_tag, const 
    public :
     Filter(T fn)
     : fn_(fn) {}
-    virtual bool Invoke(DirEntry* ent) {return Dereferrence<T>::Get(fn_)(ent);}
+    virtual bool Invoke(DirEntry* ent) {return TypeConvertor<T>::ToRef(fn_)(ent);}
    private :
     T fn_;
   };

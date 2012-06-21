@@ -5,11 +5,13 @@
 #include <thread>
 namespace os {
 using std::thread::thread;
+namespace this_thread = std::this_thread;
 }
 #elif defined(HAVE_BOOST_THREAD_HPP)
 #include <boost/thread.hpp>
 namespace os {
 using boost::thread;
+namespace this_thread = boost::this_thread;
 }
 #elif defined(HAVE_TR1_THREAD)
 #include <tr1/thread>
@@ -75,17 +77,5 @@ namespace os {
 using boost::thread_specific_ptr;
 }
 #endif
-
-namespace os {
-class Workers {
- public :
-  Workers()
-      : th_(new thread[thread::hardware_concurrency()]){}
-  Workers(int th_count)
-      : th_(new thread[th_count]){}
-  private :
-  thread* th_;
-};
-}
 
 #endif

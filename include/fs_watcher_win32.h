@@ -10,8 +10,8 @@ class HandleData;
 typedef SharedPtr<HandleData> HandleDataHandle;
 class FSWatcher : public Notificator<FSEvent*> {
   friend class FSWatcherAsync;
-  typedef roastlib::unordered_map<std::string, HandleDataHandle> DirectoryMap;
-  typedef roastlib::unordered_map<std::string, bool> FileMap;
+  typedef unordered_map<std::string, HandleDataHandle> DirectoryMap;
+  typedef unordered_map<std::string, bool> FileMap;
  public :
   FSWatcher();
   ~FSWatcher();

@@ -4,7 +4,9 @@
 #include <sys/event.h>
 #include <thread.h>
 #include <fs.h>
-#include <smart_pointer/scoped_ptr.h>
+#include <lib/unique_ptr.h>
+#include <lib/bind.h>
+#include <lib/foreach.h>
 namespace os {namespace fs {
 static const int kExit = 0;
 static const int kSync = 1;
@@ -18,19 +20,13 @@ class FSEventData {
       : fd_(fd),
         fs_event_(fs_event){}
   int fd() const {return fd_;}
-  FSEvent* fs_event() {return fs_event_.Get();}
+  FSEvent* fs_event() {return fs_event_.get();}
   KEvent* kevent() {return &kevent_;}
  private :
   int fd_;
-  ScopedPtr<FSEvent> fs_event_;
+  unique_ptr<FSEvent>::type fs_event_;
   KEvent kevent_;
 };
-
-void* FSWatcher::ThreadRunner(void* param) {
-  FSWatcher* watcher = reinterpret_cast<FSWatcher*>(param);
-  watcher->Start();
-  return NULL;
-}
 
 FSWatcher::FSWatcher() :
     kq_(kqueue()){ flags_.Set(kExit);}
@@ -122,7 +118,7 @@ void FSWatcher::Exit() {
 bool FSWatcher::Run() {
   if (flags_.At(kExit)) {
     flags_.Set(kSync);
-    thread th(ThreadRunner, this);
+    thread th(bind(&FSWatcher::Start, this));
     th.join();
     return true;
   } else {
@@ -137,7 +133,7 @@ bool FSWatcher::IsRunning() const {
 bool FSWatcher::RunAsync() {
   if (flags_.At(kExit)) {
     flags_.Set(kAsync);
-    thread th(ThreadRunner, this);
+    thread th(bind(&FSWatcher::Start, this));
     th.detach();
     return true;
   }
@@ -149,9 +145,8 @@ void FSWatcher::Start() {
   flags_.UnSet(kExit);
   std::vector<struct kevent> events;
   events.reserve(map_.size());
-  FSEventMap::iterator it = map_.begin();
-  for (; it != map_.end(); ++it) {
-    events.push_back(*(it->second->kevent()));
+  forEach(FSEventMap::value_type& it, map_) {
+    events.push_back(*(it.second->kevent()));
   }
   struct kevent *event_data = new (struct kevent[events.size()]);
   struct timespec tspec;
@@ -164,14 +159,14 @@ void FSWatcher::Start() {
         FSEvent* e = reinterpret_cast<FSEvent*>(event_data[i].udata);
         if (e->IsExist()) {
           if (e->IsModified()) {
-            NotifyForKey(FSWatcher::kModify, e);
+            NotifyForKeyAsync(FSWatcher::kModify, e);
           }
           if (e->IsUpdate()) {
-            NotifyForKey(FSWatcher::kUpdate, e);
+            NotifyForKeyAsync(FSWatcher::kUpdate, e);
           }
         } else {
           if (e->IsModified()) {
-            NotifyForKey(FSWatcher::kDelete, e);
+            NotifyForKeyAsync(FSWatcher::kDelete, e);
           }
         }
       }

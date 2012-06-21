@@ -25,6 +25,7 @@
 #include <utilities.h>
 #include <logging.h>
 #include <utils/utils.h>
+#include <lib/unique_ptr.h>
 namespace os {
 
 FILE* FileOpen(const char* path, const char* mode) {
@@ -86,7 +87,7 @@ void Logging::Initialize(const char* path, const char* mode) {
   os::lock_guard<os::mutex> lock(mutex_);
   if (!initialized_) {
     initialized_ = true;
-    logging_(new Logging(path, mode));
+    logging_.reset(new Logging(path, mode));
   }
 }
 
@@ -94,15 +95,15 @@ void Logging::Initialize(FILE* fp) {
   os::lock_guard<os::mutex> lock(mutex_);
   if (!initialized_) {
     initialized_ = true;
-    logging_(new Logging(fp));
+    logging_.reset(new Logging(fp));
   }
 }
 
 Logging* Logging::GetInstance() {
-  if (!logging_.IsContainValidPtr()) {
+  if (!logging_) {
     FATAL("Error[Logging::GetInstance] Logging::GetInstance called before Logging::Initialized called.");
   }
-  return logging_.Get();
+  return logging_.get();
 }
 
 Logging::Logging(const char* filename, const char* mode)
@@ -159,5 +160,5 @@ void Logging::Info(const char* format, ...) {
 
 bool Logging::initialized_ = false;
 os::mutex Logging::mutex_;
-ScopedPtr<Logging> Logging::logging_;
+unique_ptr<Logging>::type Logging::logging_;
 }

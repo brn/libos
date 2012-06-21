@@ -9,7 +9,7 @@ namespace os { namespace fs {
 class FSEvent;
 typedef SharedPtr<FSEvent> FSEventHandle;
 typedef std::pair<int, FSEventHandle> InotifyFDPair;
-typedef roastlib::unordered_map<int,  FSEventHandle> InotifyFDMap;
+typedef unordered_map<int,  FSEventHandle> InotifyFDMap;
 typedef unsigned long InotifyMask;
 typedef SharedPtr<inotify_event> EventHandle;
 typedef struct inotify_event InotifyEvent;

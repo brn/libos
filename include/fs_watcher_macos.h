@@ -12,7 +12,7 @@ class FSWatcher : public Notificator<FSEvent*>{
   typedef SharedPtr<FSEventData> FSEventDataHandle;
   typedef SharedPtr<FSEvent> FSEventHandle;
   typedef std::pair<const char*, FSEventDataHandle> FSEventPair;
-  typedef roastlib::unordered_map<std::string, FSEventDataHandle> FSEventMap;
+  typedef unordered_map<std::string, FSEventDataHandle> FSEventMap;
  public :
   FSWatcher();
   ~FSWatcher();

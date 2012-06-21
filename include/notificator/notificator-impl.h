@@ -22,8 +22,10 @@
  *CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *DEALINGS IN THE SOFTWARE.
  */
-#include "../lib/foreach.h"
 #include "../thread.h"
+#include "../lib/bind.h"
+#include "../lib/foreach.h"
+#include "../lib/make_shared.h"
 #include "../logging.h"
 namespace os {
 
@@ -37,10 +39,11 @@ template <typename Listener>
 inline void Notificator<Event>::AddListener(const char* key, Listener listener) {
   //Listener adapter is allocated as the heap object,
   //because this object treat as the base class type ListenerAdapterBase.
-  //Object lifetime is controlled by Notificator::pool_,
-  //so the notificator instance that create ListenerAdapter is destroyed,
+  //Object lifetime is controlled by the shared_ptr
+  //so a notificator instance that create ListenerAdapter is destroyed,
   //ListenerAdapter is destroyed too.
-  ListenerAdapter<Listener,Event>* adapter = new(&pool_) ListenerAdapter<Listener,Event>(listener);
+  typedef ListenerAdapter<Listener,Event> Adapter;
+  ListenerHandle adapter = make_shared<Adapter>(listener);
   listeners_.insert(ListenerSet(key, adapter));
 }
 
@@ -55,16 +58,16 @@ inline void Notificator<Event>::RemoveListener(const char* key) {
 
 TEMPLATE
 inline void Notificator<Event>::NotifyAll(Event e) {
-  //std::for_each(listeners_.begin(), listeners_.end(), Invocator_<Event>(e));
-  forEach(Listeners it, listeners_) {
-    (*it)->Invoke(e);
+  DEBUG_LOG(Info, "Notificator::NotifyAll Called");
+  forEach(ListenerSet& it, listeners_) {
+    it.second->Invoke(e);
   }
 }
 
 TEMPLATE
 inline void Notificator<Event>::NotifyAllAsync(Event e) {
-  thread t(bind(&Notificator<Event>::NotifyAll, this), key, e);
-  t.detach();
+  DEBUG_LOG(Info, "Notificator::NotifyAllAsync Called");
+  NotifyAsync(bind(&Notificator<Event>::NotifyAll, this, e));
 }
 
 TEMPLATE
@@ -72,17 +75,23 @@ inline void Notificator<Event>::NotifyForKey(const char* key, Event e) {
   DEBUG_LOG(Info, "Notificator::NotifyForKey[%s]", key);
   ListenersRange listener_range = listeners_.equal_range(key);
   //Call all liteners that identified by same key.
-  forEach(Listeners::value_type& it, listener_range) {
+  forEach(typename Listeners::value_type& it, listener_range) {
     it.second->Invoke(e);
   }
 }
 
 TEMPLATE
 inline void Notificator<Event>::NotifyForKeyAsync(const char* key, Event e) {
-  thread t(bind(&Notificator<Event>::NotifyForKey, this), key, e);
-  t.detach();
+  DEBUG_LOG(Info, "Notificator::NotifyForKeyAsync[%s] Called", key);
+  NotifyAsync(bind(&Notificator<Event>::NotifyForKey, this, key, e));
 }
 
+TEMPLATE
+template <typename T>
+inline void Notificator<Event>::NotifyAsync(T t) {
+  thread th(t);
+  th.detach();
+}
 
 #undef TEMPLATE
 

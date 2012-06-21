@@ -27,6 +27,7 @@
 #include "thread.h"
 #include "utilities.h"
 #include "smart_pointer/scoped_ptr.h"
+#include "lib/unique_ptr.h"
 namespace os {
 class Logging {
  public :
@@ -50,7 +51,7 @@ class Logging {
   static const char kWarn[];
   static bool initialized_;
   static mutex mutex_;
-  static ScopedPtr<Logging> logging_;
+  static unique_ptr<Logging>::type logging_;
 };
 }
 

@@ -6,6 +6,7 @@
 #endif
 #endif
 #include "../include/fs.h"
+#include "../include/thread.h"
 #include "../include/utilities.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,12 +27,17 @@ void test_func( callback fn){
   printf("ok\n");
 }
 
+static os::mutex mt;
 class ev {
  public :
   void operator()(os::fs::FSEvent* e) {
+    //os::lock_guard<os::mutex> lock(mt);
+    os::this_thread::yield();
     os::Printf("%s\n", e->filename());
+    os::Sleep(1000);
   }
 };
+
 
 int main (int argc, char** args) {
 #ifdef PLATFORM_WIN32

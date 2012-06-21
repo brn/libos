@@ -197,8 +197,7 @@ def BuildConfig(args) :
   builder.CheckHeader(True, ['type_traits', 'boost/type_traits.hpp'], 'type_traits required.')
   CheckThreads(builder, args)
   builder.CheckHeader(True, ['tuple', 'tr1/tuple', 'boost/tuple'], 'tuple required.')
-  builder.CheckHeader(True, ['boost/foreach.hpp'], 'boost/foreach.hpp is required.')
-  
+  builder.CheckHeader(True, ['boost/foreach.hpp'], 'boost/foreach is required.')
   builder.CheckStruct(True, [
       {
         'name' : 'std::function',
@@ -240,6 +239,33 @@ def BuildConfig(args) :
         'function' : 'boost::allocate_shared<char>(std::allocator<char>())'
       }
     ], 'allocate_shared required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::make_shared',
+        'header' : ['memory'],
+        'function': 'std::make_shared<char>(5)'
+      },
+      {
+        'name' : 'boost::make_shared',
+        'header' : ["memory", "boost/shared_ptr.hpp", "boost/make_shared.hpp"],
+        'function' : 'boost::make_shared<char>(5)'
+      }
+    ], 'allocate_shared required.')
+
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::unique_ptr',
+        'header' : ['memory'],
+        'struct': 'std::unique_ptr<int>'
+      },
+      {
+        'name' : 'boost::unique_ptr',
+        'header' : ["boost/interprocess/smart_ptr/unique_ptr.hpp", 'boost/checked_delete.hpp'],
+        'struct' : 'boost::interprocess::unique_ptr<int, boost::checked_deleter<int> >'
+      }
+    ], 'unique_ptr is required.')
+
   builder.Build()
 
 def run_gyp(args):
