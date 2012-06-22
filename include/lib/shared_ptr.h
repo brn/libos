@@ -1,6 +1,6 @@
 #ifndef INCLUDE_LIB_SHARED_PTR_H_
 #define INCLUDE_LIB_SHARED_PTR_H_
-
+#include "../libos_config.h"
 #if defined(HAVE_SHARED_PTR)
 #include <memory>
 namespace os {

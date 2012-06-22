@@ -25,7 +25,14 @@
             'LinkIncremental': 2, # enable incremental linking
             'AdditionalLibraryDirectories' : '$(LIB)'
           },
-        }
+        },
+        'conditions' : [
+          ['OS=="mac"', {
+            'xcode_settings' : {
+              'GCC_OPTIMIZATION_LEVEL' : '0'
+            }
+          }]
+        ]
       },
       'Release': {
         'defines': [ 'NDEBUG' ],
@@ -60,8 +67,15 @@
             'OptimizeReferences': 2, # /OPT:REF
             'EnableCOMDATFolding': 2, # /OPT:ICF
             'LinkIncremental': 1, # disable incremental linking
-          },
+          }
         },
+        'conditions' : [
+          ['OS=="mac"', {
+            'xcode_settings' : {
+              'GCC_OPTIMIZATION_LEVEL' : '3'
+            }
+          }]
+        ]
       }
     },
     'msvs_settings': {
@@ -145,7 +159,6 @@
           'PREBINDING': 'NO',                       # No -Wl,-prebind
           'USE_HEADERMAP': 'NO',
           'OTHER_CFLAGS': [
-            '-O3',
             '-fno-strict-aliasing'
           ],
           'WARNING_CFLAGS': [

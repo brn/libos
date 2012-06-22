@@ -1,6 +1,6 @@
 #ifndef INCLUDE_LIB_UNIQUE_PTR_H_
 #define INCLUDE_LIB_UNIQUE_PTR_H_
-
+#include "../libos_config.h"
 #if defined(HAVE_UNIQUE_PTR)
 #include <memory>
 namespace os {

@@ -32,7 +32,18 @@ namespace os {
 #define TEMPLATE template<typename Event>
 
 TEMPLATE
-inline Notificator<Event>::Notificator(){}
+inline Notificator<Event>::Notificator() {}
+
+TEMPLATE
+inline Notificator<Event>::Notificator(const Notificator<Event>& notificator) {
+  listeners_ = notificator.listeners_;
+}
+
+TEMPLATE
+inline const Notificator<Event>& Notificator<Event>::operator = (const Notificator<Event>& notificator) {
+  listeners_ = notificator.listeners_;
+  return (*this);
+}
 
 TEMPLATE
 template <typename Listener>
@@ -48,6 +59,12 @@ inline void Notificator<Event>::AddListener(const char* key, Listener listener) 
 }
 
 TEMPLATE
+template <typename Listener>
+inline void Notificator<Event>::operator += (std::pair<const char*, Listener> listener_pack) {
+  AddListener(listener_pack.first, listener_pack.second);
+}
+
+TEMPLATE
 inline void Notificator<Event>::RemoveListener(const char* key) {
   ListenersIterator it = listeners_.find(key);
   if (it != listeners_.end()) {
@@ -55,11 +72,16 @@ inline void Notificator<Event>::RemoveListener(const char* key) {
   }
 }
 
+TEMPLATE
+inline void Notificator<Event>::operator -= (const char* key) {
+  RemoveListener(key);
+}
+
 
 TEMPLATE
 inline void Notificator<Event>::NotifyAll(Event e) {
   DEBUG_LOG(Info, "Notificator::NotifyAll Called");
-  forEach(ListenerSet& it, listeners_) {
+  forEach(typename Listeners::value_type& it, listeners_) {
     it.second->Invoke(e);
   }
 }
@@ -67,7 +89,10 @@ inline void Notificator<Event>::NotifyAll(Event e) {
 TEMPLATE
 inline void Notificator<Event>::NotifyAllAsync(Event e) {
   DEBUG_LOG(Info, "Notificator::NotifyAllAsync Called");
-  NotifyAsync(bind(&Notificator<Event>::NotifyAll, this, e));
+  forEach(ListenerSet& it, listeners_) {
+    thread th(bind(&ListenerAdapterBase<Event>::Invoke, it.second.get(), e));
+    th.detach();
+  }
 }
 
 TEMPLATE
@@ -83,14 +108,107 @@ inline void Notificator<Event>::NotifyForKey(const char* key, Event e) {
 TEMPLATE
 inline void Notificator<Event>::NotifyForKeyAsync(const char* key, Event e) {
   DEBUG_LOG(Info, "Notificator::NotifyForKeyAsync[%s] Called", key);
-  NotifyAsync(bind(&Notificator<Event>::NotifyForKey, this, key, e));
+  ListenersRange listener_range = listeners_.equal_range(key);
+  //Call all liteners that identified by same key.
+  forEach(typename Listeners::value_type& it, listener_range) {
+    thread th(bind(&ListenerAdapterBase<Event>::Invoke, it.second.get(), e));
+    th.detach();
+  }
 }
 
 TEMPLATE
-template <typename T>
-inline void Notificator<Event>::NotifyAsync(T t) {
-  thread th(t);
-  th.detach();
+inline void Notificator<Event>::operator()(Event e, bool async) {
+  if (async) {
+    NotifyAllAsync(e);
+  } else {
+    NotifyAll(e);
+  }
+}
+
+TEMPLATE
+inline void Notificator<Event>::operator()(const char* key, Event e, bool async) {
+  if (async) {
+    NotifyForKeyAsync(key, e);
+  } else {
+    NotifyForKey(key, e);
+  }
+}
+
+TEMPLATE
+inline void Notificator<Event>::swap(Notificator<Event>& notificator) {
+  listeners_.swap(notificator.listeners_);
+}
+
+#undef TEMPLATE
+#define TEMPLATE template <typename Event, typename ListenerContainer>
+
+TEMPLATE
+SimpleNotificator<Event, ListenerContainer>::SimpleNotificator(){}
+
+TEMPLATE
+SimpleNotificator<Event, ListenerContainer>::~SimpleNotificator(){}
+
+TEMPLATE
+template <typename Listener>
+void SimpleNotificator<Event, ListenerContainer>::AddListener(Listener listener) {
+  typedef ListenerAdapter<Listener,Event> Adapter;
+  ListenerHandle handle = make_shared<Adapter>(listener);
+  container_.push_back(handle);
+}
+
+TEMPLATE
+template <typename Listener>
+void SimpleNotificator<Event, ListenerContainer>::operator += (Listener listener) {
+  AddListener(listener);
+}
+
+TEMPLATE
+void SimpleNotificator<Event, ListenerContainer>::RemoveListener() {
+  container_.clear();
+}
+
+TEMPLATE
+typename SimpleNotificator<Event, ListenerContainer>::iterator SimpleNotificator<Event, ListenerContainer>::begin() {
+  return container_.begin();
+}
+
+TEMPLATE
+typename SimpleNotificator<Event, ListenerContainer>::iterator SimpleNotificator<Event, ListenerContainer>::end() {
+  return container_.end();
+}
+
+TEMPLATE
+typename SimpleNotificator<Event, ListenerContainer>::iterator SimpleNotificator<Event, ListenerContainer>::erase(SimpleNotificator<Event, ListenerContainer>::iterator it) {
+  return container_.erase(it);
+}
+
+TEMPLATE
+void SimpleNotificator<Event, ListenerContainer>::Notify(Event e) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    it->Invoke(e);
+  }
+}
+
+TEMPLATE
+void SimpleNotificator<Event, ListenerContainer>::NotifyAsync(Event e) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind(&ListenerAdapterBase<Event>::Invoke, (*it), e));
+    th.detach();
+  }
+}
+
+TEMPLATE
+void SimpleNotificator<Event, ListenerContainer>::operator()(Event e, bool async) {
+  if (async) {
+    NotifyAsync(e);
+  } else {
+    Notify(e);
+  }
+}
+
+TEMPLATE
+void SimpleNotificator<Event, ListenerContainer>::swap(SimpleNotificator<Event, ListenerContainer>& notificator) {
+  container_.swap(notificator.container_);
 }
 
 #undef TEMPLATE

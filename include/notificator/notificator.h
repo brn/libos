@@ -42,12 +42,12 @@ class Notificator {
   typedef typename Listeners::iterator ListenersIterator;
   //The unordered_multimap equal_range type.
   typedef std::pair<ListenersIterator, ListenersIterator> ListenersRange;
-
+  
  public :
-
   Notificator();
   virtual ~Notificator(){};
-
+  Notificator(const Notificator<Event>& notificator);
+  const Notificator<Event>& operator = (const Notificator<Event>& notificator);
   /**
    * @public
    * @param {const char*} key
@@ -59,7 +59,11 @@ class Notificator {
   void AddListener(const char* key, Listener listener);
 
   void RemoveListener(const char* key);
-  
+
+  template <typename Listener>
+  void operator += (std::pair<const char*, Listener> listener_pack);
+
+  void operator -= (const char* key);
   /**
    * @public
    * @param {Event} e
@@ -79,19 +83,47 @@ class Notificator {
 
   void NotifyForKeyAsync(const char* key, Event e);
 
+  void operator()(Event e, bool async = false);
+  void operator()(const char* key, Event e, bool async = false);
   /**
    * @public
    * @returns {int}
    * Return registered listener number.
    */
   int size() const {return listeners_.size();}
-
+  void swap(Notificator<Event>& notificator);
+  bool empty() const {return listeners_.empty();}
  private :
 
-  template <typename T>
-  void NotifyAsync(T t);
   Listeners listeners_;
 };
+
+template <typename Event, typename ListenerContainer = std::vector<shared_ptr<ListenerAdapterBase<Event> > > >
+class SimpleNotificator {
+ public :
+  typedef ListenerAdapterBase<Event> EventListener;
+  typedef shared_ptr<EventListener> ListenerHandle;
+  typedef typename ListenerContainer::iterator iterator;
+  SimpleNotificator();
+  ~SimpleNotificator();
+  template <typename Listener>
+  void AddListener(Listener listener);
+  template <typename Listener>
+  void operator += (Listener listener);
+  void RemoveListener();
+  iterator begin();
+  iterator end();
+  iterator erase(iterator);
+  void Notify(Event e);
+  void NotifyAsync(Event e);
+  void operator()(Event e, bool async = false);
+  int size() const {return container_.size();}
+  void swap(SimpleNotificator<Event, ListenerContainer>& notificator);
+  bool empty() const {return container_.empty();}
+ private :
+  ListenerContainer container_;
+};
+
 }
 #include "notificator-impl.h"
 

@@ -148,6 +148,54 @@
           'SubSystem': 1, # /subsystem:console
         }
       }
+    },
+    {
+      'target_name': 'fs_event_test',
+      'type': 'executable',
+      'dependencies': [ 'os' ],
+      'include_dirs' : ['tools'],
+      'defines' : ['CURRENT_DIR="<(current_dir)"', 'GTEST_HAS_RTTI=0'],
+      'sources': [
+        'test/fs_event_test.cc',
+        'tools/gtest/gtest-all.cc',
+        'tools/gtest/gtest_main.cc'
+      ],
+      'conditions' : [
+        ['OS=="win"', {
+          'include_dirs' : [
+            '<(additional_include)'
+          ]
+        }]
+      ],
+      'msvs-settings': {
+        'VCLinkerTool': {
+          'SubSystem': 1, # /subsystem:console
+        }
+      }
+    },
+    {
+      'target_name': 'notificator_test',
+      'type': 'executable',
+      'dependencies': [ 'os' ],
+      'include_dirs' : ['tools'],
+      'defines' : ['CURRENT_DIR="<(current_dir)"', 'GTEST_HAS_RTTI=0'],
+      'sources': [
+        'test/notificator_test.cc',
+        'tools/gtest/gtest-all.cc',
+        'tools/gtest/gtest_main.cc'
+      ],
+      'conditions' : [
+        ['OS=="win"', {
+          'include_dirs' : [
+            '<(additional_include)'
+          ]
+        }]
+      ],
+      'msvs-settings': {
+        'VCLinkerTool': {
+          'SubSystem': 1, # /subsystem:console
+        }
+      }
     }
   ]
 }

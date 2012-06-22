@@ -1,6 +1,6 @@
 #ifndef INCLUDE_LIB_MAKE_SHARED_H_
 #define INCLUDE_LIB_MAKE_SHARED_H_
-
+#include "../libos_config.h"
 #if defined(HAVE_STD_MAKE_SHARED)
 #include <memory>
 namespace os {

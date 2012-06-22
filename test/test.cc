@@ -32,12 +32,19 @@ class ev {
  public :
   void operator()(os::fs::FSEvent* e) {
     //os::lock_guard<os::mutex> lock(mt);
-    os::this_thread::yield();
     os::Printf("%s\n", e->filename());
     os::Sleep(1000);
   }
 };
 
+class ev2 {
+ public :
+  void operator()(os::fs::FSEvent* e) {
+    //os::lock_guard<os::mutex> lock(mt);
+    os::Printf("%s 2\n", e->filename());
+    os::Sleep(1000);
+  }
+};
 
 int main (int argc, char** args) {
 #ifdef PLATFORM_WIN32
@@ -47,7 +54,8 @@ int main (int argc, char** args) {
   os::Logging::Initialize(stdout);
   os::fs::FSWatcher fsw;
   fsw.AddWatch("./test/test.cc");
-  fsw.AddListener(os::fs::FSWatcher::kModify, ev());
+  fsw += std::make_pair(os::fs::FSWatcher::kModify, ev());
+  fsw += std::make_pair(os::fs::FSWatcher::kModify, ev2());
   fsw.Run();
   
   /*const char* target = (argc > 1)? args[1] : "../";

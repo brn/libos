@@ -266,6 +266,19 @@ def BuildConfig(args) :
       }
     ], 'unique_ptr is required.')
 
+  builder.CheckStruct(True, [
+      {
+        'name' : 'std::ref',
+        'header' : ['functional'],
+        'function': 'std::ref(printf)'
+      },
+      {
+        'name' : 'boost::ref',
+        'header' : ["boost/ref.hpp"],
+        'function' : 'boost::ref(printf)'
+      }
+    ], 'ref is required.')
+
   builder.Build()
 
 def run_gyp(args):
@@ -276,7 +289,6 @@ def run_gyp(args):
 
 if __name__ == '__main__':
   args = sys.argv[1:]
-
   # GYP bug.
   # On msvs it will crash if it gets an absolute path.
   # On Mac/make it will crash if it doesn't get an absolute path.
@@ -316,6 +328,7 @@ if __name__ == '__main__':
   args.append('-Dtarget_arch=ia32')
   args.append('-Dcomponent=static_library')
   args.append('-Dlibrary=static_library')  
+  args.append('-Dcurrent_dir=' + os.getcwd().replace('\\', '/'))
   BuildConfig(args)
   gyp_args = list(args)
   print gyp_args

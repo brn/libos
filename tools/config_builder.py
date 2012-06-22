@@ -38,10 +38,12 @@ class ConfigBuilder :
         if not os.path.isfile(config_h_path) or self._always_build :
             print 'now making config header...'
             config_h = open(config_h_path, 'w+')
+            config_h.write('#ifndef INCLUDE_LIBOS_CONFIG_H_\n#define INCLUDE_LIBOS_CONFIG_H_\n\n')
             for ma in self._success_list :
                 config_h.write('#define ' + ma + '\n\n')
             for ma in self._failed_list :
                 config_h.write('//#undef ' + ma + '\n\n')
+            config_h.write('#endif\n')
             config_h.close()
             print 'success'
             return self._success_list

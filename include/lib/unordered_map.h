@@ -1,5 +1,6 @@
 #ifndef LIB_UNORDERED_MAP_H_
 #define LIB_UNORDERED_MAP_H_
+#include "../libos_config.h"
 #ifdef HAVE_UNORDERED_MAP_H
 #include <unordered_map>
 namespace os {
