@@ -167,20 +167,24 @@ void SimpleNotificator<Event, ListenerContainer>::RemoveListener() {
   container_.clear();
 }
 
+#define SIMPLE_NOTIFICATOR_ITER typename SimpleNotificator<Event, ListenerContainer>::iterator
+
 TEMPLATE
-typename SimpleNotificator<Event, ListenerContainer>::iterator SimpleNotificator<Event, ListenerContainer>::begin() {
+SIMPLE_NOTIFICATOR_ITER SimpleNotificator<Event, ListenerContainer>::begin() {
   return container_.begin();
 }
 
 TEMPLATE
-typename SimpleNotificator<Event, ListenerContainer>::iterator SimpleNotificator<Event, ListenerContainer>::end() {
+SIMPLE_NOTIFICATOR_ITER SimpleNotificator<Event, ListenerContainer>::end() {
   return container_.end();
 }
 
 TEMPLATE
-typename SimpleNotificator<Event, ListenerContainer>::iterator SimpleNotificator<Event, ListenerContainer>::erase(SimpleNotificator<Event, ListenerContainer>::iterator it) {
+SIMPLE_NOTIFICATOR_ITER SimpleNotificator<Event, ListenerContainer>::erase(SIMPLE_NOTIFICATOR_ITER it) {
   return container_.erase(it);
 }
+
+#undef SIMPLE_NOTIFICATOR_ITER
 
 TEMPLATE
 void SimpleNotificator<Event, ListenerContainer>::Notify(Event e) {
