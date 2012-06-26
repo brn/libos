@@ -3,10 +3,12 @@
 #include <string>
 #include <locale>
 #include <logging.h>
+#include <lib/shared_ptr.h>
+#include <lib/make_shared.h>
 #include <fs.h>
 #include <fs/fs_watcher_win32.h>
 namespace os { namespace fs {
-typedef SharedPtr<FSEvent> FSEventHandle;
+typedef shared_ptr<FSEvent> FSEventHandle;
 typedef std::pair<const char*, HandleDataHandle> DirPair;
 typedef std::pair<const char*, bool> FSEventPair;
 typedef std::pair<const char*, FSEventHandle> FilePair;
@@ -83,7 +85,7 @@ FSWatcher::~FSWatcher() {
   }
 }
 
-void FSWatcher::AddWatch(const char* path){
+void FSWatcher::AddWatch(const char* path) {
   Path path_info(path);
   const char* dir = path_info.directory();
   Stat stat(dir);
@@ -94,7 +96,7 @@ void FSWatcher::AddWatch(const char* path){
     if (find_file == file_map_.end()) {
       file_map_.insert(FSEventPair(path_info.absolute_path(), true));
       DirectoryMap::iterator it = dir_map_.find(dir);
-      FSEventHandle file_event_handle(new FSEvent(path_info.absolute_path(), this));
+      FSEventHandle file_event_handle = make_shared<FSEvent>(path_info.absolute_path(), this);
       if (it == dir_map_.end()) {
         HandleDataHandle handle(new HandleData(OpenHandle(dir), dir));
         handle->AddRef();
@@ -107,7 +109,7 @@ void FSWatcher::AddWatch(const char* path){
         CreateIoCompletionPort(handle->fs_event_handle(),
                                iocp_handle_, NULL, 1);
         if (!is_exit_) {
-          ReadDirectoryChangesW(handle.Get());
+          ReadDirectoryChangesW(handle.get());
         }
       } else {
         it->second->AddRef();
@@ -143,14 +145,20 @@ void FSWatcher::RemoveWatch(const char* path) {
 }
 
 void FSWatcher::RemoveWatch() {
+  int type = run_type_;
   Exit();
   dir_map_.clear();
+  if (type == kSync) {
+    Run();
+  } else if (type == kAsync) {
+    RunAsync();
+  }
 }
 
 void FSWatcher::CreateIOCP() {
   DirectoryMap::iterator it = dir_map_.begin();
   for (; it != dir_map_.end(); ++it) {
-    ReadDirectoryChangesW(it->second.Get());
+    ReadDirectoryChangesW(it->second.get());
   }
 }
 
@@ -229,7 +237,7 @@ void FSWatcher::Start() {
 void FSWatcher::WithoutFni(HandleData* handle_data) {
   Files::iterator it = handle_data->files()->begin();
   for (; it != handle_data->files()->end(); ++it) {
-    FSEvent* e = it->second.Get();
+    FSEvent* e = it->second.get();
     EmitEvent(e, handle_data);
   }
   if (!is_exit_) {
@@ -253,7 +261,7 @@ void FSWatcher::WithFni(HandleData* handle_data) {
       os::SPrintf(&fullpath, "%s/%s", handle_data->dir(), mbs);
       Files::iterator find = handle_data->files()->find(fullpath.c_str());
       if (find != handle_data->files()->end()) {
-        FSEvent* e = find->second.Get();
+        FSEvent* e = find->second.get();
         EmitEvent(e, handle_data);
       }
       delete[] mbs;
@@ -263,7 +271,7 @@ void FSWatcher::WithFni(HandleData* handle_data) {
     }
     fni = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<unsigned char*>(fni) + fni->NextEntryOffset);
   }
-  if (!is_exit_) {
+  if (!is_exit_ && handle_data->files()->size() > 0) {
     ::ReadDirectoryChangesW(handle_data->fs_event_handle(), handle_data->buffer(), BUF_SIZE,
                             TRUE, filter, NULL,
                             handle_data->overlapped(), NULL);

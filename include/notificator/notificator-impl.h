@@ -27,6 +27,7 @@
 #include "../lib/foreach.h"
 #include "../lib/make_shared.h"
 #include "../logging.h"
+#include "../lib/ref.h"
 namespace os {
 
 #define TEMPLATE template<typename Event>

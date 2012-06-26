@@ -1,6 +1,7 @@
 #ifndef FS_EVENT_WIN32_FS_WATCHER_H_
 #define FS_EVENT_WIN32_FS_WATCHER_H_
 #include "../thread.h"
+#include "../lib/shared_ptr.h"
 #include "notificator/notificator.h"
 namespace os { namespace fs {
 struct FSEventContainer;
@@ -8,7 +9,7 @@ class HandleData;
 class FSEvent;
 class FSWatcherAsync;
 class HandleData;
-typedef SharedPtr<HandleData> HandleDataHandle;
+typedef shared_ptr<HandleData> HandleDataHandle;
 class FSWatcher : public Notificator<FSEvent*> {
   friend class FSWatcherAsync;
   typedef unordered_map<std::string, HandleDataHandle> DirectoryMap;

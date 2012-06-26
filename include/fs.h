@@ -49,6 +49,8 @@ class FSWatcher;
 class FSEvent {
   friend class FSWatcher;
  public :
+  FSEvent() : fs_watcher_(NULL){};
+  FSEvent(const char* path, FSWatcher*);
   ~FSEvent();
   bool IsExist() const;
   bool IsModified();
@@ -58,7 +60,6 @@ class FSEvent {
   const char* filename() const;
   const char* md5() const;
  private :
-  FSEvent(const char* path, FSWatcher*);
   std::string path_;
   std::string mtime_;
   std::string md5_;
