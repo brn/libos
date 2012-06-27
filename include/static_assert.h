@@ -1,18 +1,18 @@
 #ifndef mocha_static_assert_h_
 #define mocha_static_assert_h_
 
-template <bool> struct StaticAssert{
-  enum{ StaticAssertionResult = 0 };
+template <bool, int> struct StaticAssert{
+  typedef int static_assertion_is_failed;
 };
-template <> struct StaticAssert<false> {
-  enum{ StaticAssertionResult = -1 };
-};
+
+template <int n>
+struct StaticAssert<false, n> {};
 
 #define JOIN(a, b) JOIN_(a, b)
 #define JOIN_(a, b) a##b
 #define static_assert(expr)                                             \
-  typedef char                                                          \
-  JOIN(StaticAssertion_failed_in_, __LINE__)[StaticAssert<static_cast<bool>((expr))>::StaticAssertionResult]
-      
+  {                                                                     \
+    typedef typename StaticAssert<static_cast<bool>((expr)), __LINE__>::static_assertion_is_failed JOIN(Assertion_failed_in_, __LINE__); \
+  }
 
 #endif

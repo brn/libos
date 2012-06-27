@@ -11,6 +11,7 @@ using std::remove_reference;
 using std::add_pointer;
 using std::add_reference;
 using std::is_convertible;
+using std::is_class;
 }
 #elif defined(HAVE_BOOST_TYPE_TRAITS_HPP)
 #include <boost/type_traits.hpp>
@@ -22,6 +23,7 @@ using boost::remove_reference;
 using boost::add_pointer;
 using boost::add_reference;
 using boost::is_convertible;
+using boost::is_class;
 }
 #endif
 

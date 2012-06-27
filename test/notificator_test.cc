@@ -40,6 +40,9 @@ class TestListener3 {
 
 class TestListener4 {
  public :
+  void operator()(Event e, Event e2, Event e3, Event e4, Event e5, Event e6) {
+    ASSERT_EQ(0, strcmp(e.type(), "test event"));
+  }
   void operator()(Event e) {
     ASSERT_EQ(0, strcmp(e.type(), "test event"));
   }
@@ -66,7 +69,7 @@ TEST(NotificatorTest, FunctorTest) {
   os::Logging::Initialize(stdout);
   os::Notificator<Event> notificator;
   TestListener1 t;
-  notificator.AddListener("TestListener", &t);
+  notificator.AddListener("TestListener", t);
   notificator.AddListener("TestListener", TestListener2());
   notificator.AddListener("TestListener", TestListener3());
   notificator.NotifyForKey("TestListener", Event());
@@ -92,7 +95,7 @@ TEST(NotificatorTest, MemberFunctionPtrTest) {
 
 TEST(NotificatorTest, TooManyListenerTest) {
   os::Notificator<Event> notificator;
-  for (int i = 0; i < 10000; i++) {
+  for (int i = 0; i < 100000; i++) {
     char tmp[100];
     sprintf(tmp , "TestListener%d", i);
     notificator.AddListener(tmp, TestListener4());
@@ -102,31 +105,41 @@ TEST(NotificatorTest, TooManyListenerTest) {
   notificator.NotifyAll(Event());
 }
 
-TEST(SimpleNotificatorTest, TooManyListenerTest) {
-  os::SimpleNotificator<Event> notificator;
-  for (int i = 0; i < 1000000; i++) {
-    TestListener4 test = TestListener4();
-    notificator.AddListener(test);
+TEST(NotificatorTest, TooManyListenerTest2) {
+  os::Notificator<Event> notificator;
+  for (int i = 0; i < 100000; i++) {
+    char tmp[100];
+    sprintf(tmp , "TestListener%d", i);
+    notificator.AddListener(tmp, TestListener4());
   }
-  notificator.Notify(Event());
+  notificator.NotifyAll(Event());
 }
 
-TEST(SimpleNotificatorTest, TooManyListenerTest2) {
-  typedef os::SimpleNotificator<Event>::ListenerHandle LHandle;
-  os::SimpleNotificator<Event, std::list<LHandle> > notificator;
-  for (int i = 0; i < 1000000; i++) {
+TEST(CallbacksTest, TooManyListenerTest) {
+  os::Callbacks<void (Event)> callbacks;
+  for (int i = 0; i < 100000; i++) {
     TestListener4 test = TestListener4();
-    notificator.AddListener(test);
+    callbacks.Add(test);
   }
-  notificator.Notify(Event());
+  callbacks.Invoke(Event());
 }
 
-TEST(SimpleNotificatorTest, TooManyListenerTest3) {
-  typedef os::SimpleNotificator<Event>::ListenerHandle LHandle;
-  os::SimpleNotificator<Event, std::deque<LHandle> > notificator;
-  for (int i = 0; i < 1000000; i++) {
+TEST(CallbacksTest, TooManyListenerTest2) {
+  typedef os::Callbacks<void (Event)>::ListenerHandle LHandle;
+  os::Callbacks<void (Event), std::list<LHandle> > callbacks;
+  for (int i = 0; i < 100000; i++) {
     TestListener4 test = TestListener4();
-    notificator.AddListener(test);
+    callbacks.Add(test);
   }
-  notificator.Notify(Event());
+  callbacks.Invoke(Event());
+}
+
+TEST(CallbacksTest, TooManyListenerTest3) {
+  typedef os::Callbacks<void (Event, Event, Event, Event, Event, Event)>::ListenerHandle LHandle;
+  os::Callbacks<void (Event, Event, Event, Event, Event, Event), std::deque<LHandle> > callbacks;
+  for (int i = 0; i < 100000; i++) {
+    TestListener4 test = TestListener4();
+    callbacks.Add(test);
+  }
+  callbacks.Invoke(Event(), Event(), Event(), Event(), Event(), Event());
 }

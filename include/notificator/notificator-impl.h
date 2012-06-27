@@ -26,8 +26,9 @@
 #include "../lib/bind.h"
 #include "../lib/foreach.h"
 #include "../lib/make_shared.h"
-#include "../logging.h"
 #include "../lib/ref.h"
+#include "../logging.h"
+#include "../static_assert.h"
 namespace os {
 
 #define TEMPLATE template<typename Event>
@@ -54,9 +55,7 @@ inline void Notificator<Event>::AddListener(const char* key, Listener listener) 
   //Object lifetime is controlled by the shared_ptr
   //so a notificator instance that create ListenerAdapter is destroyed,
   //ListenerAdapter is destroyed too.
-  typedef ListenerAdapter<Listener,Event> Adapter;
-  ListenerHandle adapter = make_shared<Adapter>(listener);
-  listeners_.insert(ListenerSet(key, adapter));
+  listeners_.insert(ListenerSet(key, make_shared<ListenerFunction>(listener)));
 }
 
 TEMPLATE
@@ -83,7 +82,7 @@ TEMPLATE
 inline void Notificator<Event>::NotifyAll(Event e) {
   DEBUG_LOG(Info, "Notificator::NotifyAll Called");
   forEach(typename Listeners::value_type& it, listeners_) {
-    it.second->Invoke(e);
+    (*(it.second))(e);
   }
 }
 
@@ -91,7 +90,7 @@ TEMPLATE
 inline void Notificator<Event>::NotifyAllAsync(Event e) {
   DEBUG_LOG(Info, "Notificator::NotifyAllAsync Called");
   forEach(ListenerSet& it, listeners_) {
-    thread th(bind(&ListenerAdapterBase<Event>::Invoke, it.second.get(), e));
+    thread th(bind(*(it.second.get()), e));
     th.detach();
   }
 }
@@ -102,7 +101,7 @@ inline void Notificator<Event>::NotifyForKey(const char* key, Event e) {
   ListenersRange listener_range = listeners_.equal_range(key);
   //Call all liteners that identified by same key.
   forEach(typename Listeners::value_type& it, listener_range) {
-    it.second->Invoke(e);
+    (*(it.second))(e);
   }
 }
 
@@ -112,7 +111,7 @@ inline void Notificator<Event>::NotifyForKeyAsync(const char* key, Event e) {
   ListenersRange listener_range = listeners_.equal_range(key);
   //Call all liteners that identified by same key.
   forEach(typename Listeners::value_type& it, listener_range) {
-    thread th(bind(&ListenerAdapterBase<Event>::Invoke, it.second.get(), e));
+    thread th(bind(*(it.second.get()), e));
     th.detach();
   }
 }
@@ -141,78 +140,323 @@ inline void Notificator<Event>::swap(Notificator<Event>& notificator) {
 }
 
 #undef TEMPLATE
-#define TEMPLATE template <typename Event, typename ListenerContainer>
+#define TEMPLATE template <typename Function, typename ListenerContainer>
 
 TEMPLATE
-SimpleNotificator<Event, ListenerContainer>::SimpleNotificator(){}
+Callbacks<Function, ListenerContainer>::Callbacks(){}
 
 TEMPLATE
-SimpleNotificator<Event, ListenerContainer>::~SimpleNotificator(){}
+Callbacks<Function, ListenerContainer>::~Callbacks(){}
 
 TEMPLATE
 template <typename Listener>
-void SimpleNotificator<Event, ListenerContainer>::AddListener(Listener listener) {
-  typedef ListenerAdapter<Listener,Event> Adapter;
-  ListenerHandle handle = make_shared<Adapter>(listener);
-  container_.push_back(handle);
+void Callbacks<Function, ListenerContainer>::Add(Listener listener) {
+  container_.push_back(make_shared<EventListener>(listener));
 }
 
 TEMPLATE
 template <typename Listener>
-void SimpleNotificator<Event, ListenerContainer>::operator += (Listener listener) {
+void Callbacks<Function, ListenerContainer>::operator += (Listener listener) {
   AddListener(listener);
 }
 
 TEMPLATE
-void SimpleNotificator<Event, ListenerContainer>::RemoveListener() {
+void Callbacks<Function, ListenerContainer>::Remove() {
   container_.clear();
 }
 
-#define SIMPLE_NOTIFICATOR_ITER typename SimpleNotificator<Event, ListenerContainer>::iterator
+#define SIMPLE_NOTIFICATOR_ITER typename Callbacks<Function, ListenerContainer>::iterator
 
 TEMPLATE
-SIMPLE_NOTIFICATOR_ITER SimpleNotificator<Event, ListenerContainer>::begin() {
+SIMPLE_NOTIFICATOR_ITER Callbacks<Function, ListenerContainer>::begin() {
   return container_.begin();
 }
 
 TEMPLATE
-SIMPLE_NOTIFICATOR_ITER SimpleNotificator<Event, ListenerContainer>::end() {
+SIMPLE_NOTIFICATOR_ITER Callbacks<Function, ListenerContainer>::end() {
   return container_.end();
 }
 
 TEMPLATE
-SIMPLE_NOTIFICATOR_ITER SimpleNotificator<Event, ListenerContainer>::erase(SIMPLE_NOTIFICATOR_ITER it) {
+SIMPLE_NOTIFICATOR_ITER Callbacks<Function, ListenerContainer>::erase(SIMPLE_NOTIFICATOR_ITER it) {
   return container_.erase(it);
 }
 
 #undef SIMPLE_NOTIFICATOR_ITER
 
 TEMPLATE
-void SimpleNotificator<Event, ListenerContainer>::Notify(Event e) {
+template <typename T>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1) {
   forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    it->Invoke(e);
+    (*it)(t1);
   }
 }
 
 TEMPLATE
-void SimpleNotificator<Event, ListenerContainer>::NotifyAsync(Event e) {
+template <typename T, typename T2>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2) {
   forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind(&ListenerAdapterBase<Event>::Invoke, (*it), e));
+    (*it)(t1, t2);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    (*it)(t1, t2, t3);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    (*it)(t1, t2, t3, t4);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    (*it)(t1, t2, t3, t4, t5);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    (*it)(t1, t2, t3, t4, t5, t6);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    (*it)(t1, t2, t3, t4, t5, t6, t7);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    (*it)(t1, t2, t3, t4, t5, t6, t7, t8);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    (*it)(t1, t2, t3, t4, t5, t6, t7, t8, t9);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
+void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    (*it)(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
+  }
+}
+
+
+TEMPLATE
+template <typename T>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1));
     th.detach();
   }
 }
 
 TEMPLATE
-void SimpleNotificator<Event, ListenerContainer>::operator()(Event e, bool async) {
-  if (async) {
-    NotifyAsync(e);
-  } else {
-    Notify(e);
+template <typename T, typename T2>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1, t2));
+    th.detach();
   }
 }
 
 TEMPLATE
-void SimpleNotificator<Event, ListenerContainer>::swap(SimpleNotificator<Event, ListenerContainer>& notificator) {
+template <typename T, typename T2, typename T3>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1, t2, t3));
+    th.detach();
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1, t2, t3, t4));
+    th.detach();
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1, t2, t3, t4, t5));
+    th.detach();
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1, t2, t3, t4, t5, t6));
+    th.detach();
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1, t2, t3, t4, t5, t6, t7));
+    th.detach();
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1, t2, t3, t4, t5, t6, t7, t8));
+    th.detach();
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1, t2, t3, t4, t5, t6, t7, t8, t9));
+    th.detach();
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
+void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10) {
+  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
+    thread th(bind((*it), t1, t2, t3, t4, t5, t6, t7, t8, t9, t10));
+    th.detach();
+  }
+}
+
+TEMPLATE
+template <typename T>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, bool async) {
+  if (async) {
+    NotifyAsync(t1);
+  } else {
+    Notify(t1);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, bool async) {
+  if (async) {
+    NotifyAsync(t1, t2);
+  } else {
+    Notify(t1, t2);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, bool async) {
+  if (async) {
+    NotifyAsync(t1, t2, t3);
+  } else {
+    Notify(t1, t2, t3);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, bool async) {
+  if (async) {
+    NotifyAsync(t1, t2, t3, t4);
+  } else {
+    Notify(t1, t2, t3, t4);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, bool async) {
+  if (async) {
+    NotifyAsync(t1, t2, t3, t4, t5);
+  } else {
+    Notify(t1, t2, t3, t4, t5);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, bool async) {
+  if (async) {
+    NotifyAsync(t1, t2, t3, t4, t5, t6);
+  } else {
+    Notify(t1, t2, t3, t4, t5, t6);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, bool async) {
+  if (async) {
+    NotifyAsync(t1, t2, t3, t4, t5, t6, t7);
+  } else {
+    Notify(t1, t2, t3, t4, t5, t6, t7);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, bool async) {
+  if (async) {
+    NotifyAsync(t1, t2, t3, t4, t5, t6, t7, t8);
+  } else {
+    Notify(t1, t2, t3, t4, t5, t6, t7, t8);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, bool async) {
+  if (async) {
+    NotifyAsync(t1, t2, t3, t4, t5, t6, t7, t8, t9);
+  } else {
+    Notify(t1, t2, t3, t4, t5, t6, t7, t8, t9);
+  }
+}
+
+TEMPLATE
+template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
+void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, bool async) {
+  if (async) {
+    NotifyAsync(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
+  } else {
+    Notify(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
+  }
+}
+
+TEMPLATE
+void Callbacks<Function, ListenerContainer>::swap(Callbacks<Function, ListenerContainer>& notificator) {
   container_.swap(notificator.container_);
 }
 

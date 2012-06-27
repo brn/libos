@@ -138,13 +138,6 @@ void PClose(FILE* fp) {
 }
 
 char* Strdup(const char* path) {
-#ifdef PLATFORM_MACOS
-  char* copy = reinterpret_cast<char*>(malloc((1+strlen(path)) * sizeof(char)));
-  if (copy == NULL) {return NULL;}
-  strcpy(copy, path);
-  return copy;
-#else
   return strdup(path);
-#endif
 }
 }
