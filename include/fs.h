@@ -28,7 +28,6 @@
 #include "defines.h"
 #include "thread.h"
 #include "utilities.h"
-#include "notificator/listener_adapter.h"
 
 namespace os { namespace fs {
 bool Move(const char* old_path, const char* new_path);

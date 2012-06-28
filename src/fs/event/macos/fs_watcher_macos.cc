@@ -52,7 +52,7 @@ bool FSWatcher::AddWatch(const char* path) {
     if (find == map_.end()) {
       int fd = ::open(abpath, O_EVTONLY);
       if (fd > -1) {
-        FSEventDataHandle fs_event_data(new FSEventData(fd, new FSEvent(abpath, this)));
+        FSEventDataHandle fs_event_data = make_shared<FSEventData>(fd, new FSEvent(abpath, this));
         KEvent* event = fs_event_data->kevent();
         EV_SET(event, fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, vnode_events, 0, fs_event_data->fs_event());
         map_.insert(FSEventPair(abpath, fs_event_data));
@@ -145,7 +145,7 @@ void FSWatcher::Start() {
   flags_.UnSet(kExit);
   std::vector<struct kevent> events;
   events.reserve(map_.size());
-  forEach(FSEventMap::value_type& it, map_) {
+  foreach(FSEventMap::value_type& it, map_) {
     events.push_back(*(it.second->kevent()));
   }
   struct kevent *event_data = new (struct kevent[events.size()]);

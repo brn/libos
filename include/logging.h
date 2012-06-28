@@ -26,7 +26,6 @@
 #include <stdarg.h>
 #include "thread.h"
 #include "utilities.h"
-#include "smart_pointer/scoped_ptr.h"
 #include "lib/unique_ptr.h"
 namespace os {
 class Logging {

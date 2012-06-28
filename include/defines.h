@@ -7,3 +7,8 @@
 #define PLATFORM_WIN32
 #endif
 
+#if defined(__GNUC__)
+#define ALWAYS_INLINE __attribute__((flatten))
+#else
+#define ALWAYS_INLINE inline
+#endif

@@ -59,20 +59,17 @@ void Chmod(const std::string& path, int permiss) {
 DirectoryIterator::DirectoryIterator(const char* path, bool recursive)
     : recursive_(recursive),
       dir_data_(NULL),
-      current_entry_(NULL),
-      filter_base_(NULL){Initialize(path);}
+      current_entry_(NULL) {Initialize(path);}
 
 DirectoryIterator::DirectoryIterator(const std::string& path, bool recursive)
     : recursive_(recursive),
       dir_data_(NULL),
-      current_entry_(NULL),
-      filter_base_(NULL){Initialize(path.c_str());}
+      current_entry_(NULL) {Initialize(path.c_str());}
 
 DirectoryIterator::DirectoryIterator(const Path& path_info, bool recursive)
     : recursive_(recursive),
       dir_data_(NULL),
-      current_entry_(NULL),
-      filter_base_(NULL){
+      current_entry_(NULL) {
   if (path_info.HasAbsolutePath()) {
     Initialize(path_info.absolute_path());
   }
@@ -81,8 +78,7 @@ DirectoryIterator::DirectoryIterator(const Path& path_info, bool recursive)
 DirectoryIterator::DirectoryIterator()
     : recursive_(false),
       dir_data_(NULL),
-      current_entry_(NULL),
-      filter_base_(NULL){}
+      current_entry_(NULL) {}
 
 DirectoryIterator::DirectoryIterator(const DirectoryIterator& iterator)
     : recursive_(iterator.recursive_) {
@@ -104,9 +100,6 @@ DirectoryIterator::~DirectoryIterator() {
   }
   if (current_entry_ != NULL) {
     delete current_entry_;
-  }
-  if (filter_base_ != NULL) {
-    delete filter_base_;
   }
 }
 
@@ -168,8 +161,8 @@ void DirectoryIterator::ReadDirectory(bool success) {
     if (current_entry_ != NULL && current_entry_->IsDir() && recursive_) {
       sub_.push_back(std::string(current_entry_->abspath()));
     }
-    if (current_entry_ != NULL && filter_base_ != NULL) {
-      if (!filter_base_->Invoke(current_entry_)) {operator++();}
+    if (current_entry_ != NULL && !filter_base_.empty()) {
+      if (!filter_base_(current_entry_)) {operator++();}
     }
   }
   if (current_entry_ == NULL && recursive_ && sub_.size() > 0) {

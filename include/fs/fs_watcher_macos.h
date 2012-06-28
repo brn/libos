@@ -2,16 +2,15 @@
 #define FS_EVENT_MACOS_FS_WATCHER_H_ 
 #include "../utilities.h"
 #include "../thread.h"
-#include "../smart_pointer/scoped_ptr.h"
-#include "../smart_pointer/shared_ptr.h"
 #include "../notificator/notificator.h"
 #include "../lib/unordered_map.h"
+#include "../lib/shared_ptr.h"
 namespace os {namespace fs {
 class FSEvent;
 class FSEventData;
-class FSWatcher : public Notificator<FSEvent*>{
-  typedef SharedPtr<FSEventData> FSEventDataHandle;
-  typedef SharedPtr<FSEvent> FSEventHandle;
+class FSWatcher : public Notificator<void (FSEvent*)>{
+  typedef shared_ptr<FSEventData> FSEventDataHandle;
+  typedef shared_ptr<FSEvent> FSEventHandle;
   typedef std::pair<const char*, FSEventDataHandle> FSEventPair;
   typedef unordered_map<std::string, FSEventDataHandle> FSEventMap;
  public :

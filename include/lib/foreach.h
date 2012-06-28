@@ -3,7 +3,7 @@
 #include "../libos_config.h"
 #if defined(HAVE_BOOST_FOREACH_HPP)
 #include <boost/foreach.hpp>
-#define forEach(var, cont) BOOST_FOREACH(var, cont)
-#define rForEach(var, cont) BOOST_REVERSE_FOREACH(var, cont)
+#define foreach(var, cont) BOOST_FOREACH(var, cont)
+#define rforeach(var, cont) BOOST_REVERSE_FOREACH(var, cont)
 #endif
 #endif

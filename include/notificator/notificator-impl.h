@@ -24,32 +24,33 @@
  */
 #include "../thread.h"
 #include "../lib/bind.h"
-#include "../lib/foreach.h"
 #include "../lib/make_shared.h"
-#include "../lib/ref.h"
+#include "../lib/foreach.h"
 #include "../logging.h"
 #include "../static_assert.h"
+#include "../defines.h"
+
 namespace os {
 
-#define TEMPLATE template<typename Event>
+#define TEMPLATE template<typename Signature>
 
 TEMPLATE
-inline Notificator<Event>::Notificator() {}
+ALWAYS_INLINE Notificator<Signature>::Notificator() {}
 
 TEMPLATE
-inline Notificator<Event>::Notificator(const Notificator<Event>& notificator) {
+ALWAYS_INLINE Notificator<Signature>::Notificator(const Notificator<Signature>& notificator) {
   listeners_ = notificator.listeners_;
 }
 
 TEMPLATE
-inline const Notificator<Event>& Notificator<Event>::operator = (const Notificator<Event>& notificator) {
+ALWAYS_INLINE const Notificator<Signature>& Notificator<Signature>::operator = (const Notificator<Signature>& notificator) {
   listeners_ = notificator.listeners_;
   return (*this);
 }
 
 TEMPLATE
 template <typename Listener>
-inline void Notificator<Event>::AddListener(const char* key, Listener listener) {
+ALWAYS_INLINE void Notificator<Signature>::AddListener(const char* key, Listener listener) {
   //Listener adapter is allocated as the heap object,
   //because this object treat as the base class type ListenerAdapterBase.
   //Object lifetime is controlled by the shared_ptr
@@ -60,12 +61,12 @@ inline void Notificator<Event>::AddListener(const char* key, Listener listener) 
 
 TEMPLATE
 template <typename Listener>
-inline void Notificator<Event>::operator += (std::pair<const char*, Listener> listener_pack) {
+ALWAYS_INLINE void Notificator<Signature>::operator += (std::pair<const char*, Listener> listener_pack) {
   AddListener(listener_pack.first, listener_pack.second);
 }
 
 TEMPLATE
-inline void Notificator<Event>::RemoveListener(const char* key) {
+ALWAYS_INLINE void Notificator<Signature>::RemoveListener(const char* key) {
   ListenersIterator it = listeners_.find(key);
   if (it != listeners_.end()) {
     listeners_.erase(it);
@@ -73,391 +74,108 @@ inline void Notificator<Event>::RemoveListener(const char* key) {
 }
 
 TEMPLATE
-inline void Notificator<Event>::operator -= (const char* key) {
+ALWAYS_INLINE void Notificator<Signature>::operator -= (const char* key) {
   RemoveListener(key);
 }
 
 
-TEMPLATE
-inline void Notificator<Event>::NotifyAll(Event e) {
-  DEBUG_LOG(Info, "Notificator::NotifyAll Called");
-  forEach(typename Listeners::value_type& it, listeners_) {
-    (*(it.second))(e);
+#define TEMPLATE_ARGUMENTS(z, n, in)                                    \
+  template<typename Signature>                                          \
+  template<BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), typename T)>      \
+  in void Notificator<Signature>::NotifyAll(BOOST_PP_ENUM_BINARY_PARAMS_Z(z, BOOST_PP_INC(n), T, t)) { \
+    DEBUG_LOG(Info, "Notificator::NotifyAll Called");                   \
+    foreach (typename Listeners::value_type& it, listeners_) { \
+      (*(it.second))(BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t));   \
+    }                                                                   \
   }
-}
+
+BOOST_PP_REPEAT(11, TEMPLATE_ARGUMENTS, ALWAYS_INLINE);
+
+#undef TEMPLATE_ARGUMENTS
+
+#define TEMPLATE_ARGUMENTS(z, n, in)                                    \
+  template<typename Signature>                                          \
+  template<BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), typename T)>      \
+  in void Notificator<Signature>::NotifyAllAsync(BOOST_PP_ENUM_BINARY_PARAMS_Z(z, BOOST_PP_INC(n), T, t)) { \
+    DEBUG_LOG(Info, "Notificator::NotifyAllAsync Called");              \
+    foreach (typename Listeners::value_type& it, listeners_) {          \
+      thread th(bind(*(it.second), BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t))); \
+      th.detach();                                                      \
+    }                                                                   \
+  }
+
+BOOST_PP_REPEAT(11, TEMPLATE_ARGUMENTS, ALWAYS_INLINE);
+
+#undef TEMPLATE_ARGUMENTS
+
+
+#define TEMPLATE_ARGUMENTS(z, n, in)                                    \
+  template<typename Signature>                                          \
+  template<BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), typename T)>      \
+  in void Notificator<Signature>::NotifyForKey(const char* key, BOOST_PP_ENUM_BINARY_PARAMS_Z(z, BOOST_PP_INC(n), T, t)) { \
+    DEBUG_LOG(Info, "Notificator::NotifyForKey[%s]", key);              \
+    ListenersRange listener_range = listeners_.equal_range(key);        \
+    foreach (typename Listeners::value_type& it, listener_range) { \
+      (*(it.second))(BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t));   \
+    }                                                                   \
+  }
+
+BOOST_PP_REPEAT(11, TEMPLATE_ARGUMENTS, ALWAYS_INLINE);
+
+#undef TEMPLATE_ARGUMENTS
+
+#define TEMPLATE_ARGUMENTS(z, n, in)                                    \
+  template<typename Signature>                                          \
+  template<BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), typename T)>      \
+  in void Notificator<Signature>::NotifyForKeyAsync(const char* key, BOOST_PP_ENUM_BINARY_PARAMS_Z(z, BOOST_PP_INC(n), T, t)) { \
+    DEBUG_LOG(Info, "Notificator::NotifyForKeyAsync[%s] Called", key);  \
+    ListenersRange listener_range = listeners_.equal_range(key);        \
+    foreach (typename Listeners::value_type& it, listener_range) { \
+      thread th(bind(*(it.second), BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t))); \
+      th.detach();                                                      \
+    }                                                                   \
+  }
+
+BOOST_PP_REPEAT(11, TEMPLATE_ARGUMENTS, ALWAYS_INLINE);
+
+#undef TEMPLATE_ARGUMENTS
+
+
+#define TEMPLATE_ARGUMENTS(z, n, in)                                    \
+  template<typename Signature>                                          \
+  template<BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), typename T)>      \
+  in void Notificator<Signature>::operator()(BOOST_PP_ENUM_BINARY_PARAMS_Z(z, BOOST_PP_INC(n), T, t), bool async) { \
+    if (async) {                                                        \
+      NotifyAllAsync(BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t));    \
+    } else {                                                            \
+      NotifyAll(BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t));         \
+    }                                                                   \
+  }
+
+BOOST_PP_REPEAT(11, TEMPLATE_ARGUMENTS, ALWAYS_INLINE);
+
+#undef TEMPLATE_ARGUMENTS
+
+
+#define TEMPLATE_ARGUMENTS(z, n, in)                                    \
+  template<typename Signature>                                          \
+  template<BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), typename T)>      \
+  in void Notificator<Signature>::operator()(const char* key, BOOST_PP_ENUM_BINARY_PARAMS_Z(z, BOOST_PP_INC(n), T, t), bool async) { \
+    if (async) {                                                        \
+      NotifyForKeyAsync(key, BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t)); \
+    } else {                                                            \
+      NotifyForKey(key, BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t)); \
+    }                                                                   \
+  }
+
+BOOST_PP_REPEAT(11, TEMPLATE_ARGUMENTS, ALWAYS_INLINE);
+
+#undef TEMPLATE_ARGUMENTS
+
 
 TEMPLATE
-inline void Notificator<Event>::NotifyAllAsync(Event e) {
-  DEBUG_LOG(Info, "Notificator::NotifyAllAsync Called");
-  forEach(ListenerSet& it, listeners_) {
-    thread th(bind(*(it.second.get()), e));
-    th.detach();
-  }
-}
-
-TEMPLATE
-inline void Notificator<Event>::NotifyForKey(const char* key, Event e) {
-  DEBUG_LOG(Info, "Notificator::NotifyForKey[%s]", key);
-  ListenersRange listener_range = listeners_.equal_range(key);
-  //Call all liteners that identified by same key.
-  forEach(typename Listeners::value_type& it, listener_range) {
-    (*(it.second))(e);
-  }
-}
-
-TEMPLATE
-inline void Notificator<Event>::NotifyForKeyAsync(const char* key, Event e) {
-  DEBUG_LOG(Info, "Notificator::NotifyForKeyAsync[%s] Called", key);
-  ListenersRange listener_range = listeners_.equal_range(key);
-  //Call all liteners that identified by same key.
-  forEach(typename Listeners::value_type& it, listener_range) {
-    thread th(bind(*(it.second.get()), e));
-    th.detach();
-  }
-}
-
-TEMPLATE
-inline void Notificator<Event>::operator()(Event e, bool async) {
-  if (async) {
-    NotifyAllAsync(e);
-  } else {
-    NotifyAll(e);
-  }
-}
-
-TEMPLATE
-inline void Notificator<Event>::operator()(const char* key, Event e, bool async) {
-  if (async) {
-    NotifyForKeyAsync(key, e);
-  } else {
-    NotifyForKey(key, e);
-  }
-}
-
-TEMPLATE
-inline void Notificator<Event>::swap(Notificator<Event>& notificator) {
+ALWAYS_INLINE void Notificator<Signature>::swap(Notificator<Signature>& notificator) {
   listeners_.swap(notificator.listeners_);
-}
-
-#undef TEMPLATE
-#define TEMPLATE template <typename Function, typename ListenerContainer>
-
-TEMPLATE
-Callbacks<Function, ListenerContainer>::Callbacks(){}
-
-TEMPLATE
-Callbacks<Function, ListenerContainer>::~Callbacks(){}
-
-TEMPLATE
-template <typename Listener>
-void Callbacks<Function, ListenerContainer>::Add(Listener listener) {
-  container_.push_back(make_shared<EventListener>(listener));
-}
-
-TEMPLATE
-template <typename Listener>
-void Callbacks<Function, ListenerContainer>::operator += (Listener listener) {
-  AddListener(listener);
-}
-
-TEMPLATE
-void Callbacks<Function, ListenerContainer>::Remove() {
-  container_.clear();
-}
-
-#define SIMPLE_NOTIFICATOR_ITER typename Callbacks<Function, ListenerContainer>::iterator
-
-TEMPLATE
-SIMPLE_NOTIFICATOR_ITER Callbacks<Function, ListenerContainer>::begin() {
-  return container_.begin();
-}
-
-TEMPLATE
-SIMPLE_NOTIFICATOR_ITER Callbacks<Function, ListenerContainer>::end() {
-  return container_.end();
-}
-
-TEMPLATE
-SIMPLE_NOTIFICATOR_ITER Callbacks<Function, ListenerContainer>::erase(SIMPLE_NOTIFICATOR_ITER it) {
-  return container_.erase(it);
-}
-
-#undef SIMPLE_NOTIFICATOR_ITER
-
-TEMPLATE
-template <typename T>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1, t2);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1, t2, t3);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1, t2, t3, t4);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1, t2, t3, t4, t5);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1, t2, t3, t4, t5, t6);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1, t2, t3, t4, t5, t6, t7);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1, t2, t3, t4, t5, t6, t7, t8);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1, t2, t3, t4, t5, t6, t7, t8, t9);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
-void Callbacks<Function, ListenerContainer>::Invoke(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    (*it)(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
-  }
-}
-
-
-TEMPLATE
-template <typename T>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1, t2));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1, t2, t3));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1, t2, t3, t4));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1, t2, t3, t4, t5));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1, t2, t3, t4, t5, t6));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1, t2, t3, t4, t5, t6, t7));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1, t2, t3, t4, t5, t6, t7, t8));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1, t2, t3, t4, t5, t6, t7, t8, t9));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
-void Callbacks<Function, ListenerContainer>::InvokeAsync(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10) {
-  forEach(typename ListenerContainer::iterator::value_type& it, container_) {
-    thread th(bind((*it), t1, t2, t3, t4, t5, t6, t7, t8, t9, t10));
-    th.detach();
-  }
-}
-
-TEMPLATE
-template <typename T>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, bool async) {
-  if (async) {
-    NotifyAsync(t1);
-  } else {
-    Notify(t1);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, bool async) {
-  if (async) {
-    NotifyAsync(t1, t2);
-  } else {
-    Notify(t1, t2);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, bool async) {
-  if (async) {
-    NotifyAsync(t1, t2, t3);
-  } else {
-    Notify(t1, t2, t3);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, bool async) {
-  if (async) {
-    NotifyAsync(t1, t2, t3, t4);
-  } else {
-    Notify(t1, t2, t3, t4);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, bool async) {
-  if (async) {
-    NotifyAsync(t1, t2, t3, t4, t5);
-  } else {
-    Notify(t1, t2, t3, t4, t5);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, bool async) {
-  if (async) {
-    NotifyAsync(t1, t2, t3, t4, t5, t6);
-  } else {
-    Notify(t1, t2, t3, t4, t5, t6);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, bool async) {
-  if (async) {
-    NotifyAsync(t1, t2, t3, t4, t5, t6, t7);
-  } else {
-    Notify(t1, t2, t3, t4, t5, t6, t7);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, bool async) {
-  if (async) {
-    NotifyAsync(t1, t2, t3, t4, t5, t6, t7, t8);
-  } else {
-    Notify(t1, t2, t3, t4, t5, t6, t7, t8);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, bool async) {
-  if (async) {
-    NotifyAsync(t1, t2, t3, t4, t5, t6, t7, t8, t9);
-  } else {
-    Notify(t1, t2, t3, t4, t5, t6, t7, t8, t9);
-  }
-}
-
-TEMPLATE
-template <typename T, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
-void Callbacks<Function, ListenerContainer>::operator()(T t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, bool async) {
-  if (async) {
-    NotifyAsync(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
-  } else {
-    Notify(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
-  }
-}
-
-TEMPLATE
-void Callbacks<Function, ListenerContainer>::swap(Callbacks<Function, ListenerContainer>& notificator) {
-  container_.swap(notificator.container_);
 }
 
 #undef TEMPLATE

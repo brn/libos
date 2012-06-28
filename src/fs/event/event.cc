@@ -2,7 +2,7 @@
 #include <fs.h>
 #include <utilities.h>
 #include <fs/event/md5.h>
-#include <smart_pointer/scoped_ptr.h>
+#include <lib/unique_ptr.h>
 namespace os {namespace fs {
 
 void ReadFile(std::string* buf, const char* path) {
@@ -11,8 +11,8 @@ void ReadFile(std::string* buf, const char* path) {
     fseek(fp, 0, SEEK_END);
     int size = ftell(fp);
     rewind(fp);
-    ScopedStr contents_handle(new char[size + 1]);
-    char* contents = const_cast<char*>(contents_handle.Get());
+    os::unique_ptr<char>::type contents_handle(new char[size + 1]);
+    char* contents = contents_handle.get();
     contents[size] = '\0';
     for (int i = 0; i < size;) {
       int read = fread(&contents[i], 1, size - i, fp);

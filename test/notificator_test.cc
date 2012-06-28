@@ -6,6 +6,7 @@
 #include "../include/lib/bind.h"
 #include "../include/logging.h"
 #include "../include/notificator/notificator.h"
+#include "../include/callbacks/callbacks.h"
 class Event {
  public :
   Event() : type_("test event"){}
@@ -67,7 +68,7 @@ void Testfn2(Event e) {
 
 TEST(NotificatorTest, FunctorTest) {
   os::Logging::Initialize(stdout);
-  os::Notificator<Event> notificator;
+  os::Notificator<void (Event)> notificator;
   TestListener1 t;
   notificator.AddListener("TestListener", t);
   notificator.AddListener("TestListener", TestListener2());
@@ -77,7 +78,7 @@ TEST(NotificatorTest, FunctorTest) {
 }
 
 TEST(NotificatorTest, FunctionPtrTest) {
-  os::Notificator<Event> notificator;
+  os::Notificator<void (Event)> notificator;
   notificator.AddListener("TestListener", Testfn1);
   notificator.AddListener("TestListener", Testfn2);
   notificator.NotifyForKey("TestListenerFn", Event());
@@ -85,7 +86,7 @@ TEST(NotificatorTest, FunctionPtrTest) {
 }
 
 TEST(NotificatorTest, MemberFunctionPtrTest) {
-  os::Notificator<Event> notificator;
+  os::Notificator<void (Event)> notificator;
   TestMemListener mem;
   notificator.AddListener("TestListener", os::bind(&TestMemListener::Reciever, &mem, _1));
   notificator.NotifyForKey("TestListener", Event());
@@ -94,7 +95,7 @@ TEST(NotificatorTest, MemberFunctionPtrTest) {
 
 
 TEST(NotificatorTest, TooManyListenerTest) {
-  os::Notificator<Event> notificator;
+  os::Notificator<void (Event)> notificator;
   for (int i = 0; i < 100000; i++) {
     char tmp[100];
     sprintf(tmp , "TestListener%d", i);
@@ -106,7 +107,7 @@ TEST(NotificatorTest, TooManyListenerTest) {
 }
 
 TEST(NotificatorTest, TooManyListenerTest2) {
-  os::Notificator<Event> notificator;
+  os::Notificator<void (Event)> notificator;
   for (int i = 0; i < 100000; i++) {
     char tmp[100];
     sprintf(tmp , "TestListener%d", i);

@@ -1,5 +1,6 @@
 #ifndef OS_INCLUDE_FS_DIRECOTRY_H_
 #define OS_INCLUDE_FS_DIRECOTRY_H_
+#include "../lib/function.h"
 namespace os { namespace fs {
 struct DirData;
 class Dir;
@@ -51,7 +52,7 @@ class DirectoryIterator : public std::iterator<std::forward_iterator_tag, const 
       : recursive_(recursive),
         dir_data_(NULL),
         current_entry_(NULL),
-        filter_base_(new Filter<FilterT>(f)) {Initialize(path);}
+        filter_base_(f) {Initialize(path);}
   
   DirectoryIterator();
   DirectoryIterator(const DirectoryIterator&);
@@ -63,19 +64,6 @@ class DirectoryIterator : public std::iterator<std::forward_iterator_tag, const 
   bool operator !=(const DirectoryIterator&) const;
   static const DirectoryIterator& end();
  private :
-  class FilterBase {
-   public :
-    virtual bool Invoke(DirEntry* ent) = 0;
-  };
-  template <typename T>
-  class Filter : public FilterBase {
-   public :
-    Filter(T fn)
-    : fn_(fn) {}
-    virtual bool Invoke(DirEntry* ent) {return TypeConvertor<T>::ToRef(fn_)(ent);}
-   private :
-    T fn_;
-  };
   void Initialize(const char* path);
   void CreateDirEnt();
   void ReadDirectory(bool);
@@ -83,7 +71,7 @@ class DirectoryIterator : public std::iterator<std::forward_iterator_tag, const 
   std::vector<std::string> sub_;
   DirData* dir_data_;
   DirEntry* current_entry_;
-  FilterBase* filter_base_;
+  function<bool (DirEntry*)> filter_base_;
 };
 }}
 #endif
