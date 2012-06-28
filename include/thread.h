@@ -78,4 +78,16 @@ using boost::thread_specific_ptr;
 }
 #endif
 
+#if defined(HAVE_STD_CONDITION_VARIABLE)
+#include <condition_variable>
+namespace os {
+using std::condition_variable;
+}
+#elif defined(HAVE_BOOST_CONDITION_VARIABLE)
+#include <boost/thread/condition.hpp>
+namespace os {
+using boost::condition_variable;
+}
+#endif
+
 #endif

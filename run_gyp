@@ -144,7 +144,7 @@ def CheckThreads(builder, args) :
   stds['lock_guard'] = builder.CheckStruct(False, [
       {
         'name' : 'std::lock_guard',
-        'header' : ['thread.hpp', 'mutex.hpp'],
+        'header' : ['thread'],
         'struct': 'std::lock_guard<std::mutex>'
       }
       ], 'lock_guard required.')
@@ -156,6 +156,22 @@ def CheckThreads(builder, args) :
         'struct': 'boost::lock_guard<boost::mutex>'
         }
       ], 'lock_guard required.')
+
+  stds['condition_variable'] = builder.CheckStruct(False, [
+      {
+        'name' : 'std::condition_variable',
+        'header' : ['thread', 'condition_variable'],
+        'struct': 'std::condition_variable'
+      }
+      ], 'condition_variable required.')
+
+  boosts['condition_variable'] = builder.CheckStruct(False, [
+      {
+        'name' : 'boost::condition_variable',
+        'header' : ['boost/thread/condition.hpp'],
+        'struct': 'boost::condition_variable'
+        }
+      ], 'condition_variable required.')
 
   builder.CheckHeader(True, ['boost/thread/tss.hpp'], 'boost/thread/tss.hpp is required.')
 
@@ -187,7 +203,7 @@ def BuildConfig(args) :
       {
         'name' : 'std::bind',
         'header' : ['functional'],
-        'function' : 'std::bind(fopen, _1, "rb")'
+        'function' : 'std::bind(fopen, std::placeholders::_1, "rb")'
         }, 
       {
         'name' : 'boost::bind',

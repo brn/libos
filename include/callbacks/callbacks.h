@@ -60,7 +60,7 @@ class Callbacks {
   BOOST_PP_REPEAT(PARAMETER_LENGTH, TEMPLATE_ARGUMENTS, Invoke)
   BOOST_PP_REPEAT(PARAMETER_LENGTH, TEMPLATE_ARGUMENTS, InvokeAsync)
 
-#undef TEMPLATE_ARGUMENTS;
+#undef TEMPLATE_ARGUMENTS
 
 #define TEMPLATE_ARGUMENTS(z, n, name)                                \
   template<BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), typename T)>    \
@@ -68,7 +68,7 @@ class Callbacks {
 
   BOOST_PP_REPEAT(PARAMETER_LENGTH, TEMPLATE_ARGUMENTS, nil)
 
-#undef TEMPLATE_ARGUMENTS;
+#undef TEMPLATE_ARGUMENTS
   
   int size() const {return container_.size();}
   void swap(Callbacks<Function, ListenerContainer>& notificator);

@@ -88,7 +88,7 @@ TEST(NotificatorTest, FunctionPtrTest) {
 TEST(NotificatorTest, MemberFunctionPtrTest) {
   os::Notificator<void (Event)> notificator;
   TestMemListener mem;
-  notificator.AddListener("TestListener", os::bind(&TestMemListener::Reciever, &mem, _1));
+  notificator.AddListener("TestListener", os::bind(&TestMemListener::Reciever, &mem, os::placeholders::_1));
   notificator.NotifyForKey("TestListener", Event());
   notificator.NotifyAll(Event());
 }

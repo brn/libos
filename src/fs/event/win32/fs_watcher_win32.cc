@@ -281,13 +281,13 @@ void FSWatcher::WithFni(HandleData* handle_data) {
 void FSWatcher::EmitEvent(FSEvent* e, HandleData* handle_data) {
   if (e->IsExist()) {
     if (e->IsModified()) {
-      NotifyForKey(kModify, e);
+      NotifyForKeyAsync(kModify, e);
     }
     if (e->IsUpdate()) {
-      NotifyForKey(kUpdate, e);
+      NotifyForKeyAsync(kUpdate, e);
     }
   } else {
-    NotifyForKey(kDelete, e);
+    NotifyForKeyAsync(kDelete, e);
   }
 }
 

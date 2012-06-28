@@ -99,8 +99,7 @@ BOOST_PP_REPEAT(11, TEMPLATE_ARGUMENTS, ALWAYS_INLINE);
   in void Notificator<Signature>::NotifyAllAsync(BOOST_PP_ENUM_BINARY_PARAMS_Z(z, BOOST_PP_INC(n), T, t)) { \
     DEBUG_LOG(Info, "Notificator::NotifyAllAsync Called");              \
     foreach (typename Listeners::value_type& it, listeners_) {          \
-      thread th(bind(*(it.second), BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t))); \
-      th.detach();                                                      \
+      workers_.send_request(bind(*(it.second), BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t))); \
     }                                                                   \
   }
 
@@ -131,8 +130,7 @@ BOOST_PP_REPEAT(11, TEMPLATE_ARGUMENTS, ALWAYS_INLINE);
     DEBUG_LOG(Info, "Notificator::NotifyForKeyAsync[%s] Called", key);  \
     ListenersRange listener_range = listeners_.equal_range(key);        \
     foreach (typename Listeners::value_type& it, listener_range) { \
-      thread th(bind(*(it.second), BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t))); \
-      th.detach();                                                      \
+      workers_.send_request(bind(*(it.second), BOOST_PP_ENUM_PARAMS_Z(z, BOOST_PP_INC(n), t))); \
     }                                                                   \
   }
 

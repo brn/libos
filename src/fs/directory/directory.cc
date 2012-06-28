@@ -161,7 +161,7 @@ void DirectoryIterator::ReadDirectory(bool success) {
     if (current_entry_ != NULL && current_entry_->IsDir() && recursive_) {
       sub_.push_back(std::string(current_entry_->abspath()));
     }
-    if (current_entry_ != NULL && !filter_base_.empty()) {
+    if (current_entry_ != NULL && filter_base_) {
       if (!filter_base_(current_entry_)) {operator++();}
     }
   }
