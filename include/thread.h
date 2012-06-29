@@ -78,15 +78,23 @@ using boost::thread_specific_ptr;
 }
 #endif
 
-#if defined(HAVE_STD_CONDITION_VARIABLE)
+#if defined(HAVE_STD_CONDITION_VARIABLE) && defined(HAVE_STD_CHRONO)
 #include <condition_variable>
+#include <chrono>
 namespace os {
 using std::condition_variable;
+inline void wait_for(std::condition_variable &cond, unique_lock<mutex> &lock, int ms) {
+  microseconds m(ms);
+  cond.wait_for(lock, m);
+}
 }
 #elif defined(HAVE_BOOST_CONDITION_VARIABLE)
 #include <boost/thread/condition.hpp>
 namespace os {
 using boost::condition_variable;
+inline void wait_for(boost::condition_variable &cond, unique_lock<mutex> &lock, int ms) {
+  cond.timed_wait(lock, boost::posix_time::milliseconds(ms));
+}
 }
 #endif
 

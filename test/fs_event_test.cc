@@ -1,8 +1,11 @@
+#define DEFAULE_WORKER_MAX 100
 #include <fcntl.h>
 #include <stdio.h>
 #include <gtest/gtest.h>
 #include <string.h>
+#include "../include/thread.h"
 #include "../include/lib/unordered_map.h"
+#include "../include/lib/atomic.h"
 #include "../include/utilities.h"
 #include "../include/fs.h"
 using namespace os::fs;
@@ -13,6 +16,7 @@ static UTTestFiles files;
 static UTTestStamp update_stamp;
 static UTTestStamp modify_stamp;
 static int count = 0;
+static mutex mt;
 static int all = 0;
 void Init(int begin = 0, int end = 100) {
   for (; begin < end; begin ++) {
@@ -45,17 +49,20 @@ void Watch(FSWatcher* watcher) {
 }
 
 void WatchMulti(FSWatcher* watcher, FSWatcher* watcher2) {
-  int count = 0;
+  int fcount = 0;
   UTTestFiles::iterator it = files.begin();
   for (; it != files.end(); ++it) {
-    if (!watcher->IsWatched(it->first.c_str())) {
-      if (count % 2 == 0) {
-        watcher->AddWatch(it->first.c_str());
+      if (fcount % 2 == 0) {
+        if (!watcher->IsWatched(it->first.c_str())) {
+          watcher->AddWatch(it->first.c_str());
+          fcount++;
+        }
       } else {
-        watcher2->AddWatch(it->first.c_str());
+        if (!watcher2->IsWatched(it->first.c_str())) {
+          watcher2->AddWatch(it->first.c_str());
+          fcount++;
+        }
       }
-      count++;
-    }
   }
 }
 
@@ -104,18 +111,27 @@ void Check() {
 
 void modify(FSEvent* e) {
   DEBUG_LOG(Info, "modify %s", e->filename());
-  modify_stamp[e->filename()] = 2;
-  count++;
+  {
+    lock_guard<mutex> lock(mt);
+    modify_stamp[e->filename()] = 2;
+    count++;
+  }
+  os::Sleep(2000);
 }
 void update(FSEvent* e) {
   DEBUG_LOG(Info, "update %s", e->filename());
-  update_stamp[e->filename()] = 1;
-  count++;
+  {
+    lock_guard<mutex> lock(mt);
+    update_stamp[e->filename()] = 1;
+    count++;
+  }
+  os::Sleep(2000);
 }
 }
 
 TEST(FSEventTest, FSWatcherNormalTest) {
   using namespace os;
+  Worker::default_worker_limit = 100;
   Logging::Initialize(stdout);
   Init();
   FSWatcher watcher;

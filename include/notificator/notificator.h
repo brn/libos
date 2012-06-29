@@ -25,7 +25,7 @@
 
 #include "../utilities.h"
 #include "../thread.h"
-#include "../worker.h"
+#include "../worker/worker.h"
 #include "../lib/unordered_map.h"
 #include "../lib/shared_ptr.h"
 #include "../lib/function.h"
@@ -126,7 +126,7 @@ class Notificator {
   void swap(Notificator<Signature>& notificator);
   bool empty() const {return listeners_.empty();}
  private :
-  Worker workers_;
+  Worker* workers_;
   Listeners listeners_;
 };
 

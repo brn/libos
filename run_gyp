@@ -298,7 +298,7 @@ def BuildConfig(args) :
   builder.CheckHeader(True, ["boost/preprocessor/repetition/repeat.hpp"], 'boost/preprocessor/repetition/repeat.hpp required.')
   builder.CheckHeader(True, ["boost/preprocessor/repetition/enum_params.hpp"], 'boost/preprocessor/repetition/enum_params.hpp required.')
   builder.CheckHeader(True, ["boost/preprocessor/repetition/enum_binary_params.hpp"], 'boost/preprocessor/repetition/enum_binary_params.hpp required.')
-  
+  builder.CheckHeader(True, ["boost/detail/atomic_count.hpp"], 'boost/preprocessor/repetition/repeat.hpp required.')
   builder.Build()
 
 def run_gyp(args):
